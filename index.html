@@ -1,54 +1,3 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NB PROJECT</title>
-    <style>
-        body { font-family: 'Segoe UI', sans-serif; text-align: center; background: #eef2f3; padding: 10px; color: #333; }
-        .container { max-width: 450px; margin: 0 auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        #balance { font-size: 40px; font-weight: bold; margin: 10px 0; }
-        .main-btn { padding: 15px; font-size: 20px; cursor: pointer; background: #3498db; color: white; border: none; border-radius: 10px; width: 100%; transition: 0.1s; }
-        .main-btn:active { transform: scale(0.98); }
-        .upgrade-card { background: #f9f9f9; padding: 10px; margin-top: 15px; border-radius: 10px; border: 1px solid #ddd; }
-        .chat-section { margin-top: 25px; border-top: 2px solid #eee; padding-top: 15px; text-align: left; }
-        #chat-box { height: 120px; overflow-y: auto; background: #fefefe; border: 1px solid #eee; padding: 10px; border-radius: 5px; font-size: 13px; margin-bottom: 10px; }
-        .chat-msg { margin-bottom: 5px; border-bottom: 1px solid #f1f1f1; }
-        .chat-user { font-weight: bold; color: #2980b9; }
-        .chat-input-area { display: flex; gap: 5px; }
-        #chat-input { flex-grow: 1; padding: 8px; border: 1px solid #ddd; border-radius: 5px; }
-        #leaderboard-display { text-align: left; background: #fffde7; padding: 10px; border-radius: 8px; font-size: 13px; margin-top: 15px; }
-        .me { color: #e67e22; font-weight: bold; }
-        .auth-status { font-size: 12px; color: #7f8c8d; margin-bottom: 10px; }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <h2>NB PROJECT</h2>
-    <div class="auth-status" id="user-info">Вход не выполнен</div>
-    <div id="balance">0 💰</div>
-    <div id="gps">Доход: 0/сек</div>
-    <button class="main-btn" onclick="clickMoney()">КЛИК! 💸</button>
-
-    <div class="upgrade-card">
-        <button id="buyUpgrade" onclick="buyUpgrade()">Загрузка...</button>
-    </div>
-
-    <div class="chat-section">
-        <strong>💬 Чат:</strong>
-        <div id="chat-box"></div>
-        <div class="chat-input-area">
-            <input type="text" id="chat-input" placeholder="Текст..." maxlength="100">
-            <button onclick="sendChatMessage()" style="cursor:pointer">></button>
-        </div>
-    </div>
-
-    <div id="leaderboard-display"></div>
-    <br>
-    <small onclick="logout()" style="text-decoration:underline; cursor:pointer; color:#7f8c8d;">Выйти из аккаунта</small>
-</div>
-
 <script>
     const SERVER_URL = 'https://nikitosbbarbbos.pythonanywhere.com';
     let state = JSON.parse(localStorage.getItem('nb_v4_save')) || { money: 0, upgrades: 0, upgradeCost: 10 };
@@ -123,7 +72,8 @@
 
     async function sendChatMessage() {
         const input = document.getElementById('chat-input');
-        if (!input.value.trim() || !playerName) return;
+        const text = input.value.trim();
+        if (!text || !playerName) return;
         try {
             await fetch(`${SERVER_URL}/send_chat`, {
                 method: 'POST',
@@ -131,7 +81,7 @@
                 body: JSON.stringify({ 
                     username: playerName, 
                     password: playerPass, 
-                    message: input.value 
+                    message: text 
                 })
             });
             input.value = "";
@@ -154,6 +104,13 @@
         location.reload();
     }
 
+    // Слушатель Enter для чата
+    document.getElementById('chat-input').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            sendChatMessage();
+        }
+    });
+
     setInterval(() => { state.money += state.upgrades/10; updateUI(); }, 100);
     setInterval(() => localStorage.setItem('nb_v4_save', JSON.stringify(state)), 5000);
     setInterval(loadLeaderboard, 10000);
@@ -165,6 +122,3 @@
     loadLeaderboard();
     loadChat();
 </script>
-
-</body>
-</html>
