@@ -167,7 +167,7 @@
 
         <div class="upgrade-card">
             <div class="upgrade-header header-rebirth">Перераспределение</div>
-            <p style="font-size: 11px; margin: 5px 0; color: #555;">Перераспределите свои ресурсы и получите множитель ко всему доходу (сброс прогресса)</p>
+            <p style="font-size: 11px; margin: 5px 0; color: #555;">Перераспределите ресурсы и получите вечный множитель (сброс прогресса)</p>
             <button id="buyRebirth" class="buy-btn rebirth-btn" onclick="doRebirth()">ЗАГРУЗКА...</button>
         </div>
     </div>
@@ -188,6 +188,7 @@
 <script>
     const SERVER_URL = 'https://nikitosbbarbbos.pythonanywhere.com';
     
+    // 1. ЗАГРУЗКА И МИГРАЦИЯ
     let saved = JSON.parse(localStorage.getItem('nb_v5_save'));
     if (!saved) {
         let oldSave = JSON.parse(localStorage.getItem('nb_v4_save'));
@@ -197,7 +198,7 @@
                 upgrades: oldSave.upgrades || 0,
                 upgradeCost: oldSave.upgradeCost || 10,
                 farms: 0,
-                farmCost: 1000, // Новая начальная цена для баланса
+                farmCost: 1000,
                 rebirth: 0,
                 multiplier: 1
             };
@@ -209,10 +210,16 @@
         upgrades: 0, 
         upgradeCost: 10,
         farms: 0,
-        farmCost: 1000, // Баланс: теперь ферма стоит дороже
+        farmCost: 1000,
         rebirth: 0,
         multiplier: 1
     };
+
+    // 2. ФИКС ЦЕНЫ ДЛЯ ТЕХ, КТО УЖЕ ИГРАЛ
+    // Если цена в сохранении меньше 1000, пересчитываем её правильно
+    if (state.farmCost < 1000) {
+        state.farmCost = Math.round(1000 * Math.pow(1.15, state.farms));
+    }
     
     let playerName = localStorage.getItem('nb_v5_name') || localStorage.getItem('nb_v4_name');
     let playerPass = localStorage.getItem('nb_v5_pass') || localStorage.getItem('nb_v4_pass');
@@ -285,14 +292,14 @@
     function doRebirth() {
         let nextTier = REBIRTH_TIERS[state.rebirth];
         if (nextTier && state.money >= nextTier.cost) {
-            if (confirm(`Выполнить перераспределение? Вы потеряете накопления, но получите вечный бонус!`)) {
+            if (confirm(`Выполнить перераспределение? Все накопления сбросятся, но множитель вырастет!`)) {
                 state.multiplier *= nextTier.mult;
                 state.rebirth += 1;
                 state.money = 0;
                 state.upgrades = 0;
                 state.upgradeCost = 10;
                 state.farms = 0;
-                state.farmCost = 1000; // Сброс к новой сбалансированной цене
+                state.farmCost = 1000; 
                 
                 updateUI();
                 saveLocal();
@@ -319,7 +326,7 @@
     async function saveOnline() {
         if (!playerName || !playerPass) return;
         try {
-            const r = await fetch(`${SERVER_URL}/save`, {
+            await fetch(`${SERVER_URL}/save`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
