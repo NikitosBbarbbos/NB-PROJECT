@@ -21,6 +21,7 @@
             margin: 0;
             padding: 20px 0;
             color: #333;
+            overflow-x: hidden;
         }
 
         .monopoly-board {
@@ -30,6 +31,7 @@
             border-radius: 20px;
             padding: 20px;
             box-shadow: 0 20px 0 #1565c0, 0 30px 50px rgba(0,0,0,0.3);
+            position: relative;
         }
 
         #user-info {
@@ -67,7 +69,7 @@
             margin-top: 5px;
         }
 
-        .main-btn-container { text-align: center; margin-bottom: 25px; }
+        .main-btn-container { text-align: center; margin-bottom: 25px; position: relative; }
 
         .main-btn {
             width: 110px;
@@ -80,7 +82,7 @@
             font-weight: bold;
             color: white;
             box-shadow: 0 8px 0 #c0392b, 0 15px 25px rgba(0,0,0,0.2);
-            transition: 0.1s;
+            transition: transform 0.1s, box-shadow 0.1s;
         }
 
         .main-btn:active { transform: translateY(4px); box-shadow: 0 4px 0 #c0392b; }
@@ -94,7 +96,11 @@
             padding: 15px;
             box-shadow: 0 6px 0 #ddd;
             text-align: center;
+            transition: transform 0.15s ease;
         }
+
+        /* Анимация при покупке */
+        .pulse-anim { transform: scale(0.95); box-shadow: 0 2px 0 #ddd; }
 
         .upgrade-header {
             margin: -15px -15px 10px -15px;
@@ -117,22 +123,56 @@
             cursor: pointer;
             box-shadow: 0 4px 0 #27ae60;
             width: 100%;
+            transition: background 0.2s;
         }
 
         .buy-btn:disabled { background: #bdc3c7; box-shadow: none; cursor: default; }
+        .buy-btn:not(:disabled):active { transform: translateY(2px); box-shadow: 0 2px 0 #27ae60; }
         .rebirth-btn { background: #f1c40f; box-shadow: 0 4px 0 #f39c12; color: #333; }
+        .rebirth-btn:not(:disabled):active { box-shadow: 0 2px 0 #f39c12; }
 
         .chat-container { margin-top: 25px; }
-        #chat-box { height: 120px; background: rgba(255,255,255,0.8); border: 2px solid var(--border-dark); border-radius: 10px; padding: 10px; overflow-y: auto; font-size: 13px; margin-bottom: 10px; }
+        #chat-box { height: 120px; background: rgba(255,255,255,0.8); border: 2px solid var(--border-dark); border-radius: 10px; padding: 10px; overflow-y: auto; font-size: 13px; margin-bottom: 10px; overflow-x: hidden; }
+        
+        /* Анимация новых сообщений */
+        .chat-msg { animation: slideInMsg 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); margin-bottom: 4px; }
+        @keyframes slideInMsg { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+        
         .chat-input-area { display: flex; gap: 5px; }
-        #chat-input { flex-grow: 1; border: 2px solid var(--border-dark); border-radius: 5px; padding: 8px; outline: none; }
-        .send-btn { border: 2px solid var(--border-dark); background: #fff; cursor:pointer; border-radius:5px; padding: 0 15px; font-weight:bold; }
+        #chat-input { flex-grow: 1; border: 2px solid var(--border-dark); border-radius: 5px; padding: 8px; outline: none; transition: border-color 0.2s;}
+        #chat-input:focus { border-color: #2ecc71; }
+        .send-btn { border: 2px solid var(--border-dark); background: #fff; cursor:pointer; border-radius:5px; padding: 0 15px; font-weight:bold; transition: background 0.2s; }
+        .send-btn:active { background: #eee; }
 
-        .leaderboard { background: #ffeb3b; border: 2px solid var(--border-dark); border-radius: 10px; padding: 10px; margin-top: 20px; font-size: 14px; }
+        .leaderboard-wrapper { background: #ffeb3b; border: 2px solid var(--border-dark); border-radius: 10px; margin-top: 20px; font-size: 14px; overflow: hidden; }
+        .leaderboard-header { padding: 10px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid transparent; }
+        .leaderboard-header.active-border { border-bottom: 2px solid var(--border-dark); }
+        .toggle-btn { background: white; border: 2px solid var(--border-dark); border-radius: 5px; font-size: 11px; cursor: pointer; padding: 3px 8px; font-weight: bold; }
+        #leaderboard-display { padding: 0 10px 10px 10px; display: block; }
+        
+        /* Анимация обгона в топе */
+        .lb-item { padding: 4px 5px; border-radius: 5px; transition: background-color 0.5s; margin-bottom: 2px; }
+        .rank-up { animation: flashGreen 2s ease-out; }
+        @keyframes flashGreen { 0% { background-color: #2ecc71; color: white; transform: scale(1.02); } 100% { background-color: transparent; color: inherit; transform: scale(1); } }
+
         .me { color: #d35400; text-decoration: underline; font-weight: bold; }
         .logout { margin-top: 15px; cursor: pointer; font-size: 12px; color: #666; display: block; text-align: center; }
-        
         .rebirth-badge { color: #8e44ad; font-weight: bold; }
+
+        /* Плавающий текст трат/доходов */
+        .floating-text {
+            position: fixed;
+            font-weight: 900;
+            font-size: 22px;
+            pointer-events: none;
+            text-shadow: 2px 2px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff;
+            z-index: 1000;
+            animation: floatUp 1s ease-out forwards;
+        }
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-60px) scale(1.2); }
+        }
     </style>
 </head>
 <body>
@@ -149,26 +189,26 @@
     </div>
     
     <div class="main-btn-container">
-        <button class="main-btn" onclick="clickMoney()">GO!</button>
+        <button class="main-btn" onclick="clickMoney(event)">GO!</button>
     </div>
 
     <div class="shop-grid">
-        <div class="upgrade-card">
+        <div class="upgrade-card" id="card-auto">
             <div class="upgrade-header header-auto">Ларёк</div>
             <p style="font-size: 12px; margin: 5px 0;">+1 к базовому доходу</p>
-            <button id="buyAuto" class="buy-btn" onclick="buyAuto()">КУПИТЬ</button>
+            <button id="buyAuto" class="buy-btn" onclick="buyAuto(event)">КУПИТЬ</button>
         </div>
 
-        <div class="upgrade-card">
+        <div class="upgrade-card" id="card-farm">
             <div class="upgrade-header header-farm">Крупная Ферма</div>
             <p style="font-size: 12px; margin: 5px 0;">+10 к базовому доходу</p>
-            <button id="buyFarm" class="buy-btn" onclick="buyFarm()">КУПИТЬ</button>
+            <button id="buyFarm" class="buy-btn" onclick="buyFarm(event)">КУПИТЬ</button>
         </div>
 
-        <div class="upgrade-card">
+        <div class="upgrade-card" id="card-rebirth">
             <div class="upgrade-header header-rebirth">Перераспределение</div>
             <p style="font-size: 11px; margin: 5px 0; color: #555;">Вечный множитель за сброс прогресса</p>
-            <button id="buyRebirth" class="buy-btn rebirth-btn" onclick="doRebirth()">ЗАГРУЗКА...</button>
+            <button id="buyRebirth" class="buy-btn rebirth-btn" onclick="doRebirth(event)">ЗАГРУЗКА...</button>
         </div>
     </div>
 
@@ -180,7 +220,13 @@
         </div>
     </div>
 
-    <div id="leaderboard-display" class="leaderboard"></div>
+    <div class="leaderboard-wrapper">
+        <div class="leaderboard-header" id="lb-header">
+            <b>🏆 ТОП МОНОПОЛИСТОВ</b>
+            <button class="toggle-btn" onclick="toggleLeaderboard()">Скрыть</button>
+        </div>
+        <div id="leaderboard-display"></div>
+    </div>
     
     <span class="logout" onclick="logout()">ВЫЙТИ ИЗ АККАУНТА</span>
 </div>
@@ -188,19 +234,12 @@
 <script>
     const SERVER_URL = 'https://nikitosbbarbbos.pythonanywhere.com';
     
-    // Загрузка
     let saved = JSON.parse(localStorage.getItem('nb_v5_save'));
     let state = saved || { 
-        money: 0, 
-        upgrades: 0, 
-        upgradeCost: 10,
-        farms: 0,
-        farmCost: 1000,
-        rebirth: 0,
-        multiplier: 1
+        money: 0, upgrades: 0, upgradeCost: 10,
+        farms: 0, farmCost: 1000, rebirth: 0, multiplier: 1
     };
 
-    // ПРИНУДИТЕЛЬНЫЙ ФИКС ЦЕНЫ ДЛЯ ВСЕХ
     if (state.farmCost < 1000) {
         state.farmCost = Math.round(1000 * Math.pow(1.15, state.farms));
     }
@@ -208,11 +247,50 @@
     let playerName = localStorage.getItem('nb_v5_name');
     let playerPass = localStorage.getItem('nb_v5_pass');
 
+    let previousRanks = {}; // Для анимации топа
+    let isLeaderboardVisible = true;
+    let lastChatCount = 0; // Для анимации новых сообщений
+
     const REBIRTH_TIERS = [
         { cost: 50000, mult: 3, label: "x3 МНОЖИТЕЛЬ" },
         { cost: 1000000, mult: 5, label: "x5 МНОЖИТЕЛЬ" },
         { cost: 15000000, mult: 2, label: "x2 МНОЖИТЕЛЬ" }
     ];
+
+    // Функция создания плавающего текста
+    function spawnFloatingText(text, x, y, color) {
+        const el = document.createElement('div');
+        el.className = 'floating-text';
+        el.innerText = text;
+        el.style.left = (x - 20 + Math.random() * 40) + 'px'; // Небольшой разброс
+        el.style.top = (y - 20) + 'px';
+        el.style.color = color;
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 1000);
+    }
+
+    function triggerCardAnim(cardId) {
+        const card = document.getElementById(cardId);
+        card.classList.add('pulse-anim');
+        setTimeout(() => card.classList.remove('pulse-anim'), 150);
+    }
+
+    function toggleLeaderboard() {
+        isLeaderboardVisible = !isLeaderboardVisible;
+        const display = document.getElementById('leaderboard-display');
+        const btn = document.querySelector('.toggle-btn');
+        const header = document.getElementById('lb-header');
+        
+        if (isLeaderboardVisible) {
+            display.style.display = 'block';
+            header.classList.add('active-border');
+            btn.innerText = 'Скрыть';
+        } else {
+            display.style.display = 'none';
+            header.classList.remove('active-border');
+            btn.innerText = 'Показать';
+        }
+    }
 
     function getIncome() {
         return (state.upgrades * 1 + state.farms * 10) * state.multiplier;
@@ -243,37 +321,45 @@
         document.getElementById('user-info').innerText = playerName ? `ИГРОК: ${playerName}${rbText}` : "ВХОД...";
     }
 
-    function clickMoney() { state.money += (1 * state.multiplier); updateUI(); }
+    function clickMoney(e) { 
+        let earn = 1 * state.multiplier;
+        state.money += earn; 
+        spawnFloatingText(`+${earn}`, e.clientX, e.clientY, '#2ecc71');
+        updateUI(); 
+    }
 
-    function buyAuto() {
+    function buyAuto(e) {
         if (state.money >= state.upgradeCost) {
+            spawnFloatingText(`-${state.upgradeCost} 💰`, e.clientX, e.clientY, '#e74c3c');
             state.money -= state.upgradeCost;
             state.upgrades++;
             state.upgradeCost = Math.round(state.upgradeCost * 1.15);
+            triggerCardAnim('card-auto');
             updateUI(); saveLocal();
         }
     }
 
-    function buyFarm() {
+    function buyFarm(e) {
         if (state.money >= state.farmCost) {
+            spawnFloatingText(`-${state.farmCost} 💰`, e.clientX, e.clientY, '#e74c3c');
             state.money -= state.farmCost;
             state.farms++;
             state.farmCost = Math.round(state.farmCost * 1.15);
+            triggerCardAnim('card-farm');
             updateUI(); saveLocal();
         }
     }
 
-    function doRebirth() {
+    function doRebirth(e) {
         let nextTier = REBIRTH_TIERS[state.rebirth];
         if (nextTier && state.money >= nextTier.cost) {
             if (confirm(`Сбросить прогресс ради множителя x${nextTier.mult}?`)) {
+                spawnFloatingText(`ПЕРЕРАСПРЕДЕЛЕНИЕ!`, e.clientX, e.clientY, '#9b59b6');
                 state.multiplier *= nextTier.mult;
                 state.rebirth++;
-                state.money = 0;
-                state.upgrades = 0;
-                state.upgradeCost = 10;
-                state.farms = 0;
-                state.farmCost = 1000;
+                state.money = 0; state.upgrades = 0; state.upgradeCost = 10;
+                state.farms = 0; state.farmCost = 1000;
+                triggerCardAnim('card-rebirth');
                 updateUI(); saveLocal(); saveOnline();
             }
         }
@@ -281,14 +367,28 @@
 
     async function login() {
         if (!playerName) {
-            const user = prompt("НИКНЕЙМ:");
+            const user = prompt("НИКНЕЙМ (без мата и ссылок):");
             const pass = prompt("ПАРОЛЬ:");
             if (user && pass) {
-                playerName = user.trim();
-                playerPass = pass.trim();
-                localStorage.setItem('nb_v5_name', playerName);
-                localStorage.setItem('nb_v5_pass', playerPass);
-                saveOnline();
+                try {
+                    const r = await fetch(`${SERVER_URL}/save`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username: user.trim(), password: pass.trim(), money: 0, rebirth: 0 })
+                    });
+                    const res = await r.json();
+                    if (res.error === "bad_username") {
+                        alert("Никнейм содержит запрещенные слова или ссылки. Выберите другой.");
+                        login();
+                    } else {
+                        playerName = user.trim();
+                        playerPass = pass.trim();
+                        localStorage.setItem('nb_v5_name', playerName);
+                        localStorage.setItem('nb_v5_pass', playerPass);
+                        saveOnline();
+                        updateUI();
+                    }
+                } catch(e) {}
             }
         }
     }
@@ -308,14 +408,27 @@
         try {
             const r = await fetch(`${SERVER_URL}/leaderboard`);
             const data = await r.json();
-            // Текст изменён на ТОП МОНОПОЛИСТОВ
-            let html = "<b>🏆 ТОП МОНОПОЛИСТОВ:</b><br>";
+            let html = "";
+            let newRanks = {};
+
             data.forEach(([name, score, rb], i) => {
+                let rank = i + 1;
+                newRanks[name] = rank;
+                
                 let rbBadge = rb > 0 ? `<span class="rebirth-badge">⭐${rb}</span>` : "";
                 let isMe = (name === playerName) ? ' class="me"' : '';
-                html += `${i+1}. <span${isMe}>${name}</span> ${rbBadge}: ${score} 💰<br>`;
+                
+                // Проверка: поднялся ли игрок в топе по сравнению с прошлым разом
+                let animClass = "";
+                if (previousRanks[name] && previousRanks[name] > rank) {
+                    animClass = " rank-up";
+                }
+
+                html += `<div class="lb-item${animClass}">${rank}. <span${isMe}>${name}</span> ${rbBadge}: ${score} 💰</div>`;
             });
+            
             document.getElementById('leaderboard-display').innerHTML = html;
+            previousRanks = newRanks; // Сохраняем стейт для следующего обновления
         } catch (e) {}
     }
 
@@ -323,12 +436,18 @@
         const input = document.getElementById('chat-input');
         if (!input.value.trim() || !playerName) return;
         try {
-            await fetch(`${SERVER_URL}/send_chat`, {
+            const r = await fetch(`${SERVER_URL}/send_chat`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username: playerName, password: playerPass, message: input.value })
             });
-            input.value = ""; loadChat();
+            const res = await r.json();
+            if (res.error === "filtered") {
+                alert("Сообщение содержит запрещенные слова или ссылки.");
+            } else {
+                input.value = ""; 
+                loadChat();
+            }
         } catch (e) {}
     }
 
@@ -337,8 +456,16 @@
             const r = await fetch(`${SERVER_URL}/get_chat`);
             const data = await r.json();
             const box = document.getElementById('chat-box');
-            box.innerHTML = data.map(m => `<div><b>${m.user}:</b> ${m.text}</div>`).join('');
-            box.scrollTop = box.scrollHeight;
+            
+            let isNewMessage = data.length > lastChatCount;
+            lastChatCount = data.length;
+
+            box.innerHTML = data.map(m => `<div class="chat-msg"><b>${m.user}:</b> ${m.text}</div>`).join('');
+            
+            // Если появились новые сообщения, плавно крутим вниз
+            if(isNewMessage) {
+                box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' });
+            }
         } catch (e) {}
     }
 
@@ -347,13 +474,16 @@
 
     document.getElementById('chat-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') sendChatMessage(); });
 
+    // Инициализация
+    document.getElementById('lb-header').classList.add('active-border');
+
     setInterval(() => { state.money += getIncome() / 10; updateUI(); }, 100);
     setInterval(saveLocal, 5000);
-    setInterval(loadLeaderboard, 10000);
+    setInterval(loadLeaderboard, 5000); // Обновляем топ чуть чаще для красоты анимаций
     setInterval(loadChat, 3000);
     setInterval(saveOnline, 20000);
 
-    login();
+    if(!playerName) { login(); }
     updateUI();
     loadLeaderboard();
     loadChat();
