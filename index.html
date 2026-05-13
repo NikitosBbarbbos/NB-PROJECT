@@ -233,14 +233,17 @@
     </div>
 
     <!-- КОНСОЛЬ ДЛЯ NB -->
-    <div id="admin-panel">
-        <span class="admin-title">🛠 ADMIN CONSOLE (NB ONLY)</span>
-        <div class="admin-controls">
-            <input type="number" id="admin-val" class="admin-input" placeholder="Значение">
-            <button class="admin-btn" onclick="adminAction('set_money')">УСТ. ДЕНЬГИ</button>
-            <button class="admin-btn alt" onclick="adminAction('set_rebirth')">УСТ. РБ</button>
+    <div id="admin-panel" style="display:none; margin-top: 15px; padding: 12px; border: 3px dashed #e74c3c; background: #fff; border-radius: 10px;">
+    <span style="color: #e74c3c; font-weight: bold; font-size: 14px;">🛠 ГЛОБАЛЬНАЯ АДМИНКА</span><br>
+    <div style="display: flex; flex-direction: column; gap: 5px; margin-top: 8px;">
+        <input type="text" id="admin-target" placeholder="Ник игрока (цель)" style="border: 2px solid #333; padding: 5px; border-radius: 5px;">
+        <input type="number" id="admin-val" placeholder="Значение" style="border: 2px solid #333; padding: 5px; border-radius: 5px;">
+        <div style="display: flex; gap: 5px;">
+            <button onclick="adminAction('set_money')" style="flex: 1; background: #e74c3c; color: white; border: 2px solid #333; border-radius: 5px; cursor: pointer; padding: 5px; font-weight: bold;">SET $</button>
+            <button onclick="adminAction('set_rebirth')" style="flex: 1; background: #9b59b6; color: white; border: 2px solid #333; border-radius: 5px; cursor: pointer; padding: 5px; font-weight: bold;">SET RB</button>
         </div>
     </div>
+</div>
 
     <div class="leaderboard-wrapper">
         <div class="leaderboard-header" id="lb-header">
@@ -393,38 +396,49 @@
 
     // --- ADMIN ACTIONS ---
     async function adminAction(type) {
-        const val = document.getElementById('admin-val').value;
-        if (!val) return;
+    const target = document.getElementById('admin-target').value.trim();
+    const val = document.getElementById('admin-val').value;
+    
+    if (!target || !val) {
+        alert("Введите ник цели и значение!");
+        return;
+    }
 
-        try {
-            const r = await fetch(`${SERVER_URL}/admin_cmd`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    username: playerName,
-                    password: playerPass,
-                    command: type,
-                    value: parseInt(val)
-                })
-            });
-            const res = await r.json();
-            if (res.status === "success") {
+    try {
+        const r = await fetch(`${SERVER_URL}/admin_cmd`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: playerName,
+                password: playerPass,
+                target: target,  // Кого меняем
+                command: type,
+                value: parseInt(val)
+            })
+        });
+        
+        const res = await r.json();
+        
+        if (res.status === "success") {
+            alert(`Успешно! Для ${target} установлено значение ${val}`);
+            
+            // Если ты меняешь показатели САМ СЕБЕ, обновим и локальный экран
+            if (target === playerName) {
                 if (type === 'set_money') state.money = parseInt(val);
                 if (type === 'set_rebirth') {
                     state.rebirth = parseInt(val);
-                    // Пересчет множителя на основе уровня (3^уровень)
-                    state.multiplier = Math.pow(3, state.rebirth); 
+                    state.multiplier = Math.pow(3, state.rebirth);
                 }
                 updateUI();
                 saveLocal();
-                alert("Данные на сервере обновлены!");
-            } else {
-                alert("Ошибка: " + res.error);
             }
-        } catch (e) {
-            alert("Ошибка сети");
+        } else {
+            alert("Ошибка: " + (res.error === "user_not_found" ? "Игрок не найден" : res.error));
         }
+    } catch (e) {
+        alert("Ошибка сети");
     }
+}
 
     async function login() {
         if (!playerName) {
