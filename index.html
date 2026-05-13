@@ -188,6 +188,7 @@
 <script>
     const SERVER_URL = 'https://nikitosbbarbbos.pythonanywhere.com';
     
+    // МИГРАЦИЯ: Пытаемся загрузить v5, если нет - берем v4 и адаптируем
     let saved = JSON.parse(localStorage.getItem('nb_v5_save'));
     if (!saved) {
         let oldSave = JSON.parse(localStorage.getItem('nb_v4_save'));
@@ -217,7 +218,6 @@
     let playerName = localStorage.getItem('nb_v5_name') || localStorage.getItem('nb_v4_name');
     let playerPass = localStorage.getItem('nb_v5_pass') || localStorage.getItem('nb_v4_pass');
     
-    // Синхронизируем имена для v5
     if (playerName) localStorage.setItem('nb_v5_name', playerName);
     if (playerPass) localStorage.setItem('nb_v5_pass', playerPass);
 
@@ -286,7 +286,7 @@
     function doRebirth() {
         let nextTier = REBIRTH_TIERS[state.rebirth];
         if (nextTier && state.money >= nextTier.cost) {
-            if (confirm(`Выйти на IPO? Вы потеряете все накопления, но множитель увеличится на ${nextTier.mult} навсегда!`)) {
+            if (confirm(`Выполнить перераспределение? Вы потеряете все накопления, но множитель увеличится на ${nextTier.mult} навсегда!`)) {
                 state.multiplier *= nextTier.mult;
                 state.rebirth += 1;
                 state.money = 0;
@@ -342,7 +342,7 @@
         try {
             const r = await fetch(`${SERVER_URL}/leaderboard`);
             const data = await r.json();
-            let html = "<b>🏆 ТОП МОНОПОЛИСТОВ:</b><br>";
+            let html = "<b>🏆 ТОП КОРПОРАЦИЙ:</b><br>";
             data.forEach(([name, score, rb], i) => {
                 let rbBadge = rb > 0 ? `<span class="rebirth-badge">⭐${rb}</span>` : "";
                 let isMeClass = (name === playerName) ? ' class="me"' : '';
