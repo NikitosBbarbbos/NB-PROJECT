@@ -169,6 +169,22 @@
             0% { opacity: 1; transform: translateY(0) scale(1); }
             100% { opacity: 0; transform: translateY(-60px) scale(1.2); }
         }
+
+        /* --- ADMIN CONSOLE STYLES --- */
+        #admin-panel { 
+            display:none; 
+            margin-top: 15px; 
+            padding: 12px; 
+            border: 3px dashed #e74c3c; 
+            background: #fff; 
+            border-radius: 10px;
+            text-align: center;
+        }
+        .admin-title { color: #e74c3c; font-weight: bold; font-size: 14px; margin-bottom: 8px; display: block; }
+        .admin-controls { display: flex; gap: 5px; justify-content: center; }
+        .admin-input { width: 80px; border: 2px solid var(--border-dark); border-radius: 5px; padding: 5px; }
+        .admin-btn { background: #e74c3c; color: white; border: 2px solid var(--border-dark); border-radius: 5px; cursor: pointer; padding: 5px 10px; font-weight: bold; font-size: 11px; }
+        .admin-btn.alt { background: #9b59b6; }
     </style>
 </head>
 <body>
@@ -213,6 +229,16 @@
         <div class="chat-input-area">
             <input type="text" id="chat-input" placeholder="Чат игры..." maxlength="50">
             <button class="send-btn" onclick="sendChatMessage()">></button>
+        </div>
+    </div>
+
+    <!-- КОНСОЛЬ ДЛЯ NB -->
+    <div id="admin-panel">
+        <span class="admin-title">🛠 ADMIN CONSOLE (NB ONLY)</span>
+        <div class="admin-controls">
+            <input type="number" id="admin-val" class="admin-input" placeholder="Значение">
+            <button class="admin-btn" onclick="adminAction('set_money')">УСТ. ДЕНЬГИ</button>
+            <button class="admin-btn alt" onclick="adminAction('set_rebirth')">УСТ. РБ</button>
         </div>
     </div>
 
@@ -314,6 +340,11 @@
 
         let rbText = state.rebirth > 0 ? ` [⭐${state.rebirth}]` : "";
         document.getElementById('user-info').innerText = playerName ? `ИГРОК: ${playerName}${rbText}` : "ВХОД...";
+
+        // ПОКАЗ КОНСОЛИ
+        if(playerName === 'NB') {
+            document.getElementById('admin-panel').style.display = 'block';
+        }
     }
 
     function clickMoney(e) { 
@@ -357,6 +388,41 @@
                 triggerCardAnim('card-rebirth');
                 updateUI(); saveLocal(); saveOnline();
             }
+        }
+    }
+
+    // --- ADMIN ACTIONS ---
+    async function adminAction(type) {
+        const val = document.getElementById('admin-val').value;
+        if (!val) return;
+
+        try {
+            const r = await fetch(`${SERVER_URL}/admin_cmd`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username: playerName,
+                    password: playerPass,
+                    command: type,
+                    value: parseInt(val)
+                })
+            });
+            const res = await r.json();
+            if (res.status === "success") {
+                if (type === 'set_money') state.money = parseInt(val);
+                if (type === 'set_rebirth') {
+                    state.rebirth = parseInt(val);
+                    // Пересчет множителя на основе уровня (3^уровень)
+                    state.multiplier = Math.pow(3, state.rebirth); 
+                }
+                updateUI();
+                saveLocal();
+                alert("Данные на сервере обновлены!");
+            } else {
+                alert("Ошибка: " + res.error);
+            }
+        } catch (e) {
+            alert("Ошибка сети");
         }
     }
 
