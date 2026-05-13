@@ -245,7 +245,7 @@
 
     let previousRanks = {}; 
     let isLeaderboardVisible = true;
-    let lastChatJSON = ""; // Для умной загрузки чата
+    let lastChatJSON = "";
 
     const REBIRTH_TIERS = [
         { cost: 50000, mult: 3, label: "x3 МНОЖИТЕЛЬ" },
@@ -460,7 +460,6 @@
             const r = await fetch(`${SERVER_URL}/get_chat`);
             const rawText = await r.text();
             
-            // Если текст ответа такой же, как в прошлый раз — не перерисовываем чат (защита от дергания анимации)
             if (rawText === lastChatJSON) return;
             lastChatJSON = rawText;
             
