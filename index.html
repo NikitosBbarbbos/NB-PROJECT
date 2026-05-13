@@ -546,11 +546,11 @@
         const box = document.getElementById('chat-box');
         
         box.innerHTML = data.map(m => {
-                const isDev = (m.user === 'NB');
-                const devTag = isDev ? '<b style="color: #e74c3c; font-size: 10px; border: 1px solid #e74c3c; padding: 1px 3px; border-radius: 3px; margin-right: 5px;">DEV</b>' : '';
-                const msgStyle = isDev ? 'style="color: #c0392b; font-weight: 500;"' : '';
+            const isDev = (m.user === 'NB');
+            const devTag = isDev ? '<b style="color: #e74c3c; font-size: 10px; border: 1px solid #e74c3c; padding: 1px 3px; border-radius: 3px; margin-right: 5px;">DEV</b>' : '';
+            const msgStyle = isDev ? 'style="color: #c0392b; font-weight: 500;"' : '';
 
-                return `<div class="chat-msg">${devTag}<b ${msgStyle}>${m.user}:</b> <span ${msgStyle}>${m.text}</span></div>`;
+            return `<div class="chat-msg">${devTag}<b ${msgStyle}>${m.user}:</b> <span ${msgStyle}>${m.text}</span></div>`;
         }).join('');
         
         box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' });
