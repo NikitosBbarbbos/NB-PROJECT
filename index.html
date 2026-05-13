@@ -167,7 +167,7 @@
 
         <div class="upgrade-card">
             <div class="upgrade-header header-rebirth">Перераспределение</div>
-            <p style="font-size: 11px; margin: 5px 0; color: #555;">Перераспределите ресурсы и получите вечный множитель (сброс прогресса)</p>
+            <p style="font-size: 11px; margin: 5px 0; color: #555;">Вечный множитель за сброс прогресса</p>
             <button id="buyRebirth" class="buy-btn rebirth-btn" onclick="doRebirth()">ЗАГРУЗКА...</button>
         </div>
     </div>
@@ -188,23 +188,8 @@
 <script>
     const SERVER_URL = 'https://nikitosbbarbbos.pythonanywhere.com';
     
-    // 1. ЗАГРУЗКА И МИГРАЦИЯ
+    // Загрузка
     let saved = JSON.parse(localStorage.getItem('nb_v5_save'));
-    if (!saved) {
-        let oldSave = JSON.parse(localStorage.getItem('nb_v4_save'));
-        if (oldSave) {
-            saved = {
-                money: oldSave.money || 0,
-                upgrades: oldSave.upgrades || 0,
-                upgradeCost: oldSave.upgradeCost || 10,
-                farms: 0,
-                farmCost: 1000,
-                rebirth: 0,
-                multiplier: 1
-            };
-        }
-    }
-
     let state = saved || { 
         money: 0, 
         upgrades: 0, 
@@ -215,17 +200,13 @@
         multiplier: 1
     };
 
-    // 2. ФИКС ЦЕНЫ ДЛЯ ТЕХ, КТО УЖЕ ИГРАЛ
-    // Если цена в сохранении меньше 1000, пересчитываем её правильно
+    // ПРИНУДИТЕЛЬНЫЙ ФИКС ЦЕНЫ ДЛЯ ВСЕХ
     if (state.farmCost < 1000) {
         state.farmCost = Math.round(1000 * Math.pow(1.15, state.farms));
     }
     
-    let playerName = localStorage.getItem('nb_v5_name') || localStorage.getItem('nb_v4_name');
-    let playerPass = localStorage.getItem('nb_v5_pass') || localStorage.getItem('nb_v4_pass');
-    
-    if (playerName) localStorage.setItem('nb_v5_name', playerName);
-    if (playerPass) localStorage.setItem('nb_v5_pass', playerPass);
+    let playerName = localStorage.getItem('nb_v5_name');
+    let playerPass = localStorage.getItem('nb_v5_pass');
 
     const REBIRTH_TIERS = [
         { cost: 50000, mult: 3, label: "x3 МНОЖИТЕЛЬ" },
@@ -242,13 +223,11 @@
         document.getElementById('gps').innerText = "ДОХОД: " + getIncome().toFixed(1) + "/СЕК";
         document.getElementById('multiplier-display').innerText = `МНОЖИТЕЛЬ: x${state.multiplier} (Уровень: ${state.rebirth})`;
         
-        const btnAuto = document.getElementById('buyAuto');
-        btnAuto.innerText = `${state.upgradeCost} 💰 (У вас: ${state.upgrades})`;
-        btnAuto.disabled = state.money < state.upgradeCost;
+        document.getElementById('buyAuto').innerText = `${state.upgradeCost} 💰 (У вас: ${state.upgrades})`;
+        document.getElementById('buyAuto').disabled = state.money < state.upgradeCost;
 
-        const btnFarm = document.getElementById('buyFarm');
-        btnFarm.innerText = `${state.farmCost} 💰 (У вас: ${state.farms})`;
-        btnFarm.disabled = state.money < state.farmCost;
+        document.getElementById('buyFarm').innerText = `${state.farmCost} 💰 (У вас: ${state.farms})`;
+        document.getElementById('buyFarm').disabled = state.money < state.farmCost;
 
         const btnRebirth = document.getElementById('buyRebirth');
         let nextTier = REBIRTH_TIERS[state.rebirth];
@@ -256,7 +235,7 @@
             btnRebirth.innerText = `ЦЕНА: ${nextTier.cost} 💰 (${nextTier.label})`;
             btnRebirth.disabled = state.money < nextTier.cost;
         } else {
-            btnRebirth.innerText = "МАКСИМАЛЬНЫЙ УРОВЕНЬ!";
+            btnRebirth.innerText = "МАКСИМУМ!";
             btnRebirth.disabled = true;
         }
 
@@ -264,54 +243,45 @@
         document.getElementById('user-info').innerText = playerName ? `ИГРОК: ${playerName}${rbText}` : "ВХОД...";
     }
 
-    function clickMoney() { 
-        state.money += (1 * state.multiplier); 
-        updateUI(); 
-    }
+    function clickMoney() { state.money += (1 * state.multiplier); updateUI(); }
 
     function buyAuto() {
         if (state.money >= state.upgradeCost) {
             state.money -= state.upgradeCost;
-            state.upgrades += 1;
+            state.upgrades++;
             state.upgradeCost = Math.round(state.upgradeCost * 1.15);
-            updateUI();
-            saveLocal();
+            updateUI(); saveLocal();
         }
     }
 
     function buyFarm() {
         if (state.money >= state.farmCost) {
             state.money -= state.farmCost;
-            state.farms += 1;
+            state.farms++;
             state.farmCost = Math.round(state.farmCost * 1.15);
-            updateUI();
-            saveLocal();
+            updateUI(); saveLocal();
         }
     }
 
     function doRebirth() {
         let nextTier = REBIRTH_TIERS[state.rebirth];
         if (nextTier && state.money >= nextTier.cost) {
-            if (confirm(`Выполнить перераспределение? Все накопления сбросятся, но множитель вырастет!`)) {
+            if (confirm(`Сбросить прогресс ради множителя x${nextTier.mult}?`)) {
                 state.multiplier *= nextTier.mult;
-                state.rebirth += 1;
+                state.rebirth++;
                 state.money = 0;
                 state.upgrades = 0;
                 state.upgradeCost = 10;
                 state.farms = 0;
-                state.farmCost = 1000; 
-                
-                updateUI();
-                saveLocal();
-                saveOnline();
-                alert("Успешно! Новый множитель: x" + state.multiplier);
+                state.farmCost = 1000;
+                updateUI(); saveLocal(); saveOnline();
             }
         }
     }
 
     async function login() {
-        if (!playerName || !playerPass) {
-            const user = prompt("ВАШ НИКНЕЙМ:");
+        if (!playerName) {
+            const user = prompt("НИКНЕЙМ:");
             const pass = prompt("ПАРОЛЬ:");
             if (user && pass) {
                 playerName = user.trim();
@@ -319,22 +289,17 @@
                 localStorage.setItem('nb_v5_name', playerName);
                 localStorage.setItem('nb_v5_pass', playerPass);
                 saveOnline();
-            } else { login(); }
+            }
         }
     }
 
     async function saveOnline() {
-        if (!playerName || !playerPass) return;
+        if (!playerName) return;
         try {
             await fetch(`${SERVER_URL}/save`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    username: playerName, 
-                    password: playerPass, 
-                    money: Math.floor(state.money),
-                    rebirth: state.rebirth
-                })
+                body: JSON.stringify({ username: playerName, password: playerPass, money: Math.floor(state.money), rebirth: state.rebirth })
             });
         } catch (e) {}
     }
@@ -343,11 +308,12 @@
         try {
             const r = await fetch(`${SERVER_URL}/leaderboard`);
             const data = await r.json();
-            let html = "<b>🏆 ТОП КОРПОРАЦИЙ:</b><br>";
+            // Текст изменён на ТОП МОНОПОЛИСТОВ
+            let html = "<b>🏆 ТОП МОНОПОЛИСТОВ:</b><br>";
             data.forEach(([name, score, rb], i) => {
                 let rbBadge = rb > 0 ? `<span class="rebirth-badge">⭐${rb}</span>` : "";
-                let isMeClass = (name === playerName) ? ' class="me"' : '';
-                html += `${i+1}. <span${isMeClass}>${name}</span> ${rbBadge}: ${score} 💰<br>`;
+                let isMe = (name === playerName) ? ' class="me"' : '';
+                html += `${i+1}. <span${isMe}>${name}</span> ${rbBadge}: ${score} 💰<br>`;
             });
             document.getElementById('leaderboard-display').innerHTML = html;
         } catch (e) {}
@@ -362,8 +328,7 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username: playerName, password: playerPass, message: input.value })
             });
-            input.value = "";
-            loadChat();
+            input.value = ""; loadChat();
         } catch (e) {}
     }
 
@@ -382,17 +347,13 @@
 
     document.getElementById('chat-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') sendChatMessage(); });
 
-    setInterval(() => { 
-        state.money += getIncome() / 10; 
-        updateUI(); 
-    }, 100);
-
+    setInterval(() => { state.money += getIncome() / 10; updateUI(); }, 100);
     setInterval(saveLocal, 5000);
     setInterval(loadLeaderboard, 10000);
     setInterval(loadChat, 3000);
     setInterval(saveOnline, 20000);
 
-    if (!playerName) login();
+    login();
     updateUI();
     loadLeaderboard();
     loadChat();
