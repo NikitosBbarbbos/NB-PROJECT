@@ -796,7 +796,9 @@
                         }
                         playerName = user.trim(); playerPass = pass.trim();
                         localStorage.setItem('nb_v5_name', playerName); localStorage.setItem('nb_v5_pass', playerPass);
-                        checkAFK(); return;
+                        checkAFK(); 
+                        updateUI(); loadLeaderboard(); loadChat();
+                        return;
                     }
                     const rSave = await fetch(`${SERVER_URL}/save`, {
                         method: 'POST', headers: {'Content-Type': 'application/json'},
@@ -806,11 +808,11 @@
                     if (resSave.status === "success") {
                         playerName = user.trim(); playerPass = pass.trim();
                         localStorage.setItem('nb_v5_name', playerName); localStorage.setItem('nb_v5_pass', playerPass);
-                        updateUI();
+                        updateUI(); loadLeaderboard(); loadChat();
                     } else { alert(resSave.error); login(); }
                 } catch(e) { alert("Сервер недоступен."); }
             }
-        } else { checkAFK(); sanitizeState(); }
+        } else { initGame(); }
     }
 
     async function saveOnline() {
@@ -886,8 +888,41 @@
     setInterval(loadChat, 5000);
     setInterval(() => { fetchRoulette(); fetchDuels(); }, 3000);
 
-    if(!playerName) { login(); } else { checkAFK(); sanitizeState(); }
-    updateUI(); loadLeaderboard(); loadChat();
+    async function initGame() {
+        if (!playerName) {
+            login();
+        } else {
+            try {
+                const rLoad = await fetch(`${SERVER_URL}/load`, {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({username: playerName, password: playerPass})
+                });
+                if (rLoad.ok) {
+                    const resLoad = await rLoad.json();
+                    let serverState = resLoad.state;
+                    
+                    if (!serverState) {
+                        state.money = resLoad.score || 0;
+                        state.rebirth = resLoad.rebirth || 0;
+                        state.total_assets = state.money;
+                    } else {
+                        // Trust server as source of truth for cross-device sync
+                        if (!state.lastSaveTime || (serverState.lastSaveTime && serverState.lastSaveTime > state.lastSaveTime)) {
+                            state = serverState;
+                        }
+                    }
+                }
+            } catch(e) { console.log("Offline mode"); }
+            
+            sanitizeState();
+            checkAFK();
+            updateUI(); 
+            loadLeaderboard(); 
+            loadChat();
+        }
+    }
+
+    initGame();
 </script>
 
 </body>
