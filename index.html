@@ -306,7 +306,7 @@
 </div>
 
 <script>
-    const SERVER_URL = 'http://127.0.0.1:5000'; // Для продакшена замените на Render URL
+    const SERVER_URL = 'https://NikitosBbarbbos.pythonanywhere.com'; // Для продакшена замените на Render URL
     
     let playerName = localStorage.getItem('nb_v5_name');
     let playerPass = localStorage.getItem('nb_v5_pass');
@@ -786,7 +786,14 @@
                     });
                     if (rLoad.ok) {
                         const resLoad = await rLoad.json();
-                        if (resLoad.state) { state = resLoad.state; sanitizeState(); }
+                        if (resLoad.state) { 
+                            state = resLoad.state; 
+                            sanitizeState(); 
+                        } else {
+                            state.money = resLoad.score || 0;
+                            state.rebirth = resLoad.rebirth || 0;
+                            state.total_assets = state.money;
+                        }
                         playerName = user.trim(); playerPass = pass.trim();
                         localStorage.setItem('nb_v5_name', playerName); localStorage.setItem('nb_v5_pass', playerPass);
                         checkAFK(); return;
