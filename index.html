@@ -1,1417 +1,975 @@
 <!DOCTYPE html>
 <html lang="ru">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NB PROJECT: MONOPOLY EDITION v6</title>
     <style>
-        :root {
-            --bg-blue: #22a6f0;
-            --board-green: #cde6d0;
-            --border-dark: #333;
-        }
+        :root { --bg-blue: #22a6f0; --board-green: #cde6d0; --border-dark: #333; }
+        body { font-family: 'Segoe UI', Roboto, sans-serif; background: var(--bg-blue); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px 0; color: #333; overflow-x: hidden; }
+        
+        .monopoly-board { width: 450px; background: var(--board-green); border: 4px solid var(--border-dark); border-radius: 20px; padding: 20px; box-shadow: 0 20px 0 #1565c0, 0 30px 50px rgba(0,0,0,0.3); position: relative; }
+        
+        .tabs { display: flex; gap: 5px; margin-bottom: 15px; }
+        .tabs button { flex: 1; padding: 8px 5px; font-weight: bold; font-size: 13px; border-radius: 8px; border: 2px solid var(--border-dark); cursor: pointer; background: white; transition: 0.2s; }
+        .tabs button.active { background: #2ecc71; color: white; box-shadow: inset 0 3px 0 rgba(0,0,0,0.1); }
+        .tab-content { display: none; animation: fadeIn 0.3s; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        body {
-            font-family: 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg-blue);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px 0;
-            color: #333;
-            overflow-x: hidden;
-        }
+        #user-info { background: white; border: 2px solid var(--border-dark); padding: 5px 15px; border-radius: 50px; font-weight: bold; margin-bottom: 15px; box-shadow: 0 4px 0 #ddd; display: inline-block; }
+        .money-display { background: #fff; border: 3px solid var(--border-dark); border-radius: 15px; padding: 15px; margin-bottom: 20px; box-shadow: inset 0 0 10px rgba(0,0,0,0.1); text-align: center; }
+        #balance { font-size: 40px; font-weight: 900; color: #27ae60; text-shadow: 2px 2px 0 #fff, 3px 3px 0 rgba(0,0,0,0.1); }
+        #multiplier-display { font-size: 13px; color: #8e44ad; font-weight: bold; margin-top: 5px; }
+        #shares-display { font-size: 16px; color: #f39c12; font-weight: bold; margin-top: 5px; }
 
-        .monopoly-board {
-            width: 450px;
-            background: var(--board-green);
-            border: 4px solid var(--border-dark);
-            border-radius: 20px;
-            padding: 20px;
-            box-shadow: 0 20px 0 #1565c0, 0 30px 50px rgba(0, 0, 0, 0.3);
-            position: relative;
-        }
+        .main-btn-container { text-align: center; margin-bottom: 25px; position: relative; }
+        .main-btn { width: 110px; height: 110px; background: #e74c3c; border: 4px solid var(--border-dark); border-radius: 50%; cursor: pointer; font-size: 22px; font-weight: bold; color: white; box-shadow: 0 8px 0 #c0392b, 0 15px 25px rgba(0,0,0,0.2); transition: transform 0.1s, box-shadow 0.1s; }
+        .main-btn:active { transform: translateY(4px); box-shadow: 0 4px 0 #c0392b; }
 
-        .tabs {
-            display: flex;
-            gap: 5px;
-            margin-bottom: 15px;
-        }
-
-        .tabs button {
-            flex: 1;
-            padding: 8px 5px;
-            font-weight: bold;
-            font-size: 13px;
-            border-radius: 8px;
-            border: 2px solid var(--border-dark);
-            cursor: pointer;
-            background: white;
-            transition: 0.2s;
-        }
-
-        .tabs button.active {
-            background: #2ecc71;
-            color: white;
-            box-shadow: inset 0 3px 0 rgba(0, 0, 0, 0.1);
-        }
-
-        .tab-content {
-            display: none;
-            animation: fadeIn 0.3s;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(5px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        #user-info {
-            background: white;
-            border: 2px solid var(--border-dark);
-            padding: 5px 15px;
-            border-radius: 50px;
-            font-weight: bold;
-            margin-bottom: 15px;
-            box-shadow: 0 4px 0 #ddd;
-            display: inline-block;
-        }
-
-        .money-display {
-            background: #fff;
-            border: 3px solid var(--border-dark);
-            border-radius: 15px;
-            padding: 15px;
-            margin-bottom: 20px;
-            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
-
-        #balance {
-            font-size: 40px;
-            font-weight: 900;
-            color: #27ae60;
-            text-shadow: 2px 2px 0 #fff, 3px 3px 0 rgba(0, 0, 0, 0.1);
-        }
-
-        #multiplier-display {
-            font-size: 13px;
-            color: #8e44ad;
-            font-weight: bold;
-            margin-top: 5px;
-        }
-
-        #shares-display {
-            font-size: 16px;
-            color: #f39c12;
-            font-weight: bold;
-            margin-top: 5px;
-        }
-
-        .main-btn-container {
-            text-align: center;
-            margin-bottom: 25px;
-            position: relative;
-        }
-
-        .main-btn {
-            width: 110px;
-            height: 110px;
-            background: #e74c3c;
-            border: 4px solid var(--border-dark);
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 22px;
-            font-weight: bold;
-            color: white;
-            box-shadow: 0 8px 0 #c0392b, 0 15px 25px rgba(0, 0, 0, 0.2);
-            transition: transform 0.1s, box-shadow 0.1s;
-        }
-
-        .main-btn:active {
-            transform: translateY(4px);
-            box-shadow: 0 4px 0 #c0392b;
-        }
-
-        .shop-grid {
-            display: grid;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        .upgrade-card {
-            background: white;
-            border: 3px solid var(--border-dark);
-            border-radius: 10px;
-            padding: 12px;
-            box-shadow: 0 4px 0 #ddd;
-            text-align: center;
-            transition: transform 0.1s;
-        }
-
-        .upgrade-header {
-            margin: -12px -12px 10px -12px;
-            padding: 8px;
-            border-bottom: 3px solid var(--border-dark);
-            font-weight: bold;
-            text-transform: uppercase;
-            font-size: 13px;
-        }
-
-        .header-auto {
-            background: #f39c12;
-        }
-
-        .header-farm {
-            background: #3498db;
-            color: white;
-        }
-
-        .header-rebirth {
-            background: #9b59b6;
-            color: white;
-        }
-
-        .buy-btn {
-            background: #2ecc71;
-            border: 2px solid var(--border-dark);
-            padding: 8px;
-            border-radius: 5px;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 4px 0 #27ae60;
-            width: 100%;
-            transition: 0.1s;
-            font-size: 12px;
-        }
-
-        .buy-btn:disabled {
-            background: #bdc3c7;
-            box-shadow: none;
-            cursor: default;
-        }
-
-        .buy-btn:not(:disabled):active {
-            transform: translateY(2px);
-            box-shadow: 0 2px 0 #27ae60;
-        }
-
-        .rebirth-btn {
-            background: #f1c40f;
-            box-shadow: 0 4px 0 #f39c12;
-            color: #333;
-        }
+        .shop-grid { display: grid; gap: 10px; margin-bottom: 15px; }
+        .upgrade-card { background: white; border: 3px solid var(--border-dark); border-radius: 10px; padding: 12px; box-shadow: 0 4px 0 #ddd; text-align: center; transition: transform 0.1s; }
+        .upgrade-header { margin: -12px -12px 10px -12px; padding: 8px; border-bottom: 3px solid var(--border-dark); font-weight: bold; text-transform: uppercase; font-size: 13px; }
+        .header-auto { background: #f39c12; } .header-farm { background: #3498db; color: white; } .header-rebirth { background: #9b59b6; color: white; }
+        
+        .buy-btn { background: #2ecc71; border: 2px solid var(--border-dark); padding: 8px; border-radius: 5px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 0 #27ae60; width: 100%; transition: 0.1s; font-size: 12px; }
+        .buy-btn:disabled { background: #bdc3c7; box-shadow: none; cursor: default; }
+        .buy-btn:not(:disabled):active { transform: translateY(2px); box-shadow: 0 2px 0 #27ae60; }
+        .rebirth-btn { background: #f1c40f; box-shadow: 0 4px 0 #f39c12; color: #333; }
 
         /* RUNES TAB */
-        .rune-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
-        .rune-card {
-            background: #fff;
-            border: 2px solid var(--border-dark);
-            border-radius: 10px;
-            padding: 10px;
-            text-align: center;
-            box-shadow: 0 4px 0 #ddd;
-        }
-
-        .rune-card h4 {
-            margin: 0 0 5px 0;
-            font-size: 14px;
-            color: #8e44ad;
-        }
-
-        .rune-card p {
-            margin: 0 0 10px 0;
-            font-size: 11px;
-            color: #555;
-            height: 30px;
-        }
-
-        .rune-btn {
-            background: #9b59b6;
-            color: white;
-            border: 2px solid var(--border-dark);
-            padding: 5px;
-            width: 100%;
-            font-weight: bold;
-            border-radius: 5px;
-            cursor: pointer;
-            box-shadow: 0 3px 0 #8e44ad;
-        }
-
-        .rune-btn:active {
-            transform: translateY(2px);
-            box-shadow: none;
-        }
-
-        .monopoly-case {
-            grid-column: 1 / -1;
-            background: #fff3cd;
-            border-color: #f1c40f;
-        }
-
-        .monopoly-case h4 {
-            color: #d35400;
-        }
-
-        .monopoly-case .rune-btn {
-            background: #f39c12;
-            box-shadow: 0 3px 0 #d35400;
-            color: #333;
-        }
-
-        .btn-info {
-            background: #3498db;
-            color: white;
-            border: 2px solid var(--border-dark);
-            padding: 5px;
-            font-weight: bold;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-bottom: 10px;
-            width: 100%;
-            box-shadow: 0 3px 0 #2980b9;
-        }
+        .rune-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .rune-card { background: #fff; border: 2px solid var(--border-dark); border-radius: 10px; padding: 10px; text-align: center; box-shadow: 0 4px 0 #ddd; }
+        .rune-card h4 { margin: 0 0 5px 0; font-size: 14px; color: #8e44ad; }
+        .rune-card p { margin: 0 0 10px 0; font-size: 11px; color: #555; height: 30px;}
+        .rune-btn { background: #9b59b6; color: white; border: 2px solid var(--border-dark); padding: 5px; width: 100%; font-weight: bold; border-radius: 5px; cursor: pointer; box-shadow: 0 3px 0 #8e44ad; }
+        .rune-btn:active { transform: translateY(2px); box-shadow: none; }
+        .monopoly-case { grid-column: 1 / -1; background: #fff3cd; border-color: #f1c40f; }
+        .monopoly-case h4 { color: #d35400; }
+        .monopoly-case .rune-btn { background: #f39c12; box-shadow: 0 3px 0 #d35400; color: #333;}
+        
+        .btn-info { background: #3498db; color: white; border: 2px solid var(--border-dark); padding: 5px; font-weight: bold; border-radius: 5px; cursor: pointer; margin-bottom: 10px; width: 100%; box-shadow: 0 3px 0 #2980b9;}
 
         /* MODAL */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.6);
-            z-index: 2000;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal-box {
-            background: white;
-            border: 4px solid var(--border-dark);
-            border-radius: 10px;
-            padding: 20px;
-            width: 350px;
-            max-height: 80vh;
-            overflow-y: auto;
-            position: relative;
-        }
-
-        .modal-close {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: #e74c3c;
-            color: white;
-            border: 2px solid var(--border-dark);
-            font-weight: bold;
-            cursor: pointer;
-            border-radius: 5px;
-        }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; }
+        .modal-box { background: white; border: 4px solid var(--border-dark); border-radius: 10px; padding: 20px; width: 350px; max-height: 80vh; overflow-y: auto; position: relative; }
+        .modal-close { position: absolute; top: 10px; right: 10px; background: #e74c3c; color: white; border: 2px solid var(--border-dark); font-weight: bold; cursor: pointer; border-radius: 5px; }
 
         /* CASINO TAB */
-        .casino-panel {
-            background: white;
-            border: 2px solid var(--border-dark);
-            border-radius: 10px;
-            padding: 10px;
-            margin-bottom: 15px;
-        }
-
-        .roulette-timer {
-            font-size: 24px;
-            font-weight: bold;
-            text-align: center;
-            margin-bottom: 10px;
-            color: #e74c3c;
-        }
-
-        .bet-buttons {
-            display: flex;
-            gap: 5px;
-        }
-
-        .bet-btn {
-            flex: 1;
-            padding: 8px;
-            font-weight: bold;
-            border: 2px solid var(--border-dark);
-            border-radius: 5px;
-            cursor: pointer;
-            color: white;
-        }
-
-        .bet-red {
-            background: #e74c3c;
-        }
-
-        .bet-black {
-            background: #2c3e50;
-        }
-
-        .bet-green {
-            background: #2ecc71;
-        }
-
-        .bet-input {
-            width: 100%;
-            padding: 8px;
-            margin-top: 10px;
-            border: 2px solid var(--border-dark);
-            border-radius: 5px;
-            box-sizing: border-box;
-            font-weight: bold;
-        }
-
-        .roulette-history {
-            margin-top: 10px;
-            font-size: 11px;
-            background: #f9f9f9;
-            padding: 5px;
-            border: 1px solid #ddd;
-            height: 60px;
-            overflow-y: auto;
-        }
-
-        .duel-list {
-            background: #f9f9f9;
-            border: 2px solid var(--border-dark);
-            border-radius: 5px;
-            padding: 5px;
-            max-height: 120px;
-            overflow-y: auto;
-            margin-top: 10px;
-        }
-
-        .duel-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 5px;
-            border-bottom: 1px solid #ddd;
-            font-size: 12px;
-        }
-
-        .duel-btn {
-            background: #e67e22;
-            color: white;
-            border: 2px solid var(--border-dark);
-            padding: 3px 8px;
-            font-weight: bold;
-            border-radius: 3px;
-            cursor: pointer;
-        }
+        .casino-panel { background: white; border: 2px solid var(--border-dark); border-radius: 10px; padding: 10px; margin-bottom: 15px; }
+        .roulette-timer { font-size: 24px; font-weight: bold; text-align: center; margin-bottom: 10px; color: #e74c3c; }
+        .bet-buttons { display: flex; gap: 5px; }
+        .bet-btn { flex: 1; padding: 8px; font-weight: bold; border: 2px solid var(--border-dark); border-radius: 5px; cursor: pointer; color: white; }
+        .bet-red { background: #e74c3c; } .bet-black { background: #2c3e50; } .bet-green { background: #2ecc71; }
+        .bet-input { width: 100%; padding: 8px; margin-top: 10px; border: 2px solid var(--border-dark); border-radius: 5px; box-sizing: border-box; font-weight: bold; }
+        .roulette-history { margin-top: 10px; font-size: 11px; background: #f9f9f9; padding: 5px; border: 1px solid #ddd; height: 60px; overflow-y: auto; }
+        
+        .duel-list { background: #f9f9f9; border: 2px solid var(--border-dark); border-radius: 5px; padding: 5px; max-height: 120px; overflow-y: auto; margin-top: 10px;}
+        .duel-item { display: flex; justify-content: space-between; align-items: center; padding: 5px; border-bottom: 1px solid #ddd; font-size: 12px; }
+        .duel-btn { background: #e67e22; color: white; border: 2px solid var(--border-dark); padding: 3px 8px; font-weight: bold; border-radius: 3px; cursor: pointer; }
 
         /* FORBES TAB */
-        .leaderboard-wrapper {
-            background: #ffeb3b;
-            border: 2px solid var(--border-dark);
-            border-radius: 10px;
-            font-size: 13px;
-        }
-
-        .leaderboard-header {
-            padding: 10px;
-            font-weight: bold;
-            text-align: center;
-            border-bottom: 2px solid var(--border-dark);
-        }
-
-        #leaderboard-display {
-            padding: 10px;
-        }
-
-        .lb-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 2px 0;
-            border-bottom: 1px dashed #ccc;
-        }
+        .leaderboard-wrapper { background: #ffeb3b; border: 2px solid var(--border-dark); border-radius: 10px; font-size: 13px; }
+        .leaderboard-header { padding: 10px; font-weight: bold; text-align: center; border-bottom: 2px solid var(--border-dark); }
+        #leaderboard-display { padding: 10px; }
+        .lb-row { display: flex; justify-content: space-between; padding: 2px 0; border-bottom: 1px dashed #ccc; }
 
         /* CHAT & OTHER */
-        .chat-container {
-            margin-top: 15px;
-        }
+        .chat-container { margin-top: 15px; }
+        #chat-box { height: 100px; background: rgba(255,255,255,0.8); border: 2px solid var(--border-dark); border-radius: 10px; padding: 10px; overflow-y: auto; font-size: 13px; margin-bottom: 10px; }
+        .chat-input-area { display: flex; gap: 5px; }
+        #chat-input { flex-grow: 1; border: 2px solid var(--border-dark); border-radius: 5px; padding: 8px; }
+        .send-btn { border: 2px solid var(--border-dark); background: #fff; cursor:pointer; border-radius:5px; padding: 0 15px; font-weight:bold; }
+        
+        .btn-danger { background: #c0392b; color: white; border: 2px solid var(--border-dark); padding: 10px; width: 100%; font-weight: bold; border-radius: 5px; cursor: pointer; margin-top: 10px; }
+        .logout { margin-top: 15px; cursor: pointer; font-size: 12px; color: #666; display: block; text-align: center; text-decoration: underline; }
 
-        #chat-box {
-            height: 100px;
-            background: rgba(255, 255, 255, 0.8);
-            border: 2px solid var(--border-dark);
-            border-radius: 10px;
-            padding: 10px;
-            overflow-y: auto;
-            font-size: 13px;
-            margin-bottom: 10px;
-        }
-
-        .chat-input-area {
-            display: flex;
-            gap: 5px;
-        }
-
-        #chat-input {
-            flex-grow: 1;
-            border: 2px solid var(--border-dark);
-            border-radius: 5px;
-            padding: 8px;
-        }
-
-        .send-btn {
-            border: 2px solid var(--border-dark);
-            background: #fff;
-            cursor: pointer;
-            border-radius: 5px;
-            padding: 0 15px;
-            font-weight: bold;
-        }
-
-        .btn-danger {
-            background: #c0392b;
-            color: white;
-            border: 2px solid var(--border-dark);
-            padding: 10px;
-            width: 100%;
-            font-weight: bold;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-
-        .logout {
-            margin-top: 15px;
-            cursor: pointer;
-            font-size: 12px;
-            color: #666;
-            display: block;
-            text-align: center;
-            text-decoration: underline;
-        }
-
-        .floating-text {
-            position: fixed;
-            font-weight: 900;
-            font-size: 22px;
-            pointer-events: none;
-            text-shadow: 2px 2px 0 #fff, -1px -1px 0 #fff;
-            z-index: 1000;
-            animation: floatUp 1s ease-out forwards;
-        }
-
-        @keyframes floatUp {
-            0% {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-
-            100% {
-                opacity: 0;
-                transform: translateY(-60px) scale(1.2);
-            }
-        }
-
-        @keyframes slideDown {
-            from {
-                top: -100px;
-                opacity: 0;
-            }
-
-            to {
-                top: 20%;
-                opacity: 1;
-            }
-        }
-
-        @keyframes pulse {
-            from {
-                transform: scale(1);
-            }
-
-            to {
-                transform: scale(1.02);
-            }
-        }
+        .floating-text { position: fixed; font-weight: 900; font-size: 22px; pointer-events: none; text-shadow: 2px 2px 0 #fff, -1px -1px 0 #fff; z-index: 1000; animation: floatUp 1s ease-out forwards; }
+        @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-60px) scale(1.2); } }
+        @keyframes slideDown { from { top: -100px; opacity: 0; } to { top: 20%; opacity: 1; } }
+        @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.02); } }
     </style>
 </head>
-
 <body>
 
-    <div class="monopoly-board">
-        <div id="broadcast-overlay"
-            style="display:none; position:fixed; top:20%; left:50%; transform:translateX(-50%); background:rgba(231, 76, 60, 0.95); color:white; padding:20px 40px; border-radius:15px; font-size:24px; font-weight:900; z-index:9999; box-shadow:0 10px 30px rgba(0,0,0,0.5); text-align:center; border:4px solid #c0392b; animation: slideDown 0.5s ease-out;">
-        </div>
+<div class="monopoly-board">
+    <div id="broadcast-overlay" style="display:none; position:fixed; top:20%; left:50%; transform:translateX(-50%); background:rgba(231, 76, 60, 0.95); color:white; padding:20px 40px; border-radius:15px; font-size:24px; font-weight:900; z-index:9999; box-shadow:0 10px 30px rgba(0,0,0,0.5); text-align:center; border:4px solid #c0392b; animation: slideDown 0.5s ease-out;"></div>
 
-        <div style="text-align: center;">
-            <div id="user-info">ВХОД...</div>
-        </div>
+    <div style="text-align: center;"><div id="user-info">ВХОД...</div></div>
 
-        <div class="tabs">
-            <button class="active" onclick="showTab('city', this)">🏙️ Город</button>
-            <button onclick="showTab('runes', this)">🔮 Руны</button>
-            <button onclick="showTab('casino', this)">🎰 Казино</button>
-            <button onclick="showTab('forbes', this)">🏆 Forbes</button>
-            <button onclick="showTab('settings', this)">⚙️</button>
-            <button id="admin-tab-btn" onclick="showTab('admin', this)"
-                style="display:none; background:#8e44ad; color:white;">🛠</button>
-        </div>
+    <div class="tabs">
+        <button class="active" onclick="showTab('city', this)">🏙️ Город</button>
+        <button onclick="showTab('runes', this)">🔮 Руны</button>
+        <button onclick="showTab('casino', this)">🎰 Казино</button>
+        <button onclick="showTab('forbes', this)">🏆 Forbes</button>
+        <button onclick="showTab('settings', this)">⚙️</button>
+        <button id="admin-tab-btn" onclick="showTab('admin', this)" style="display:none; background:#8e44ad; color:white;">🛠</button>
+    </div>
+    
+    <div class="money-display">
+        <div id="event-banner" style="display:none; background:#e74c3c; color:white; font-weight:bold; text-align:center; padding:8px; border-radius:5px; margin-bottom:10px; animation: pulse 1s infinite alternate; border:2px solid #c0392b;"></div>
+        <div id="balance">0 💰</div>
+        <div id="gps">ДОХОД: 0/СЕК</div>
+        <div id="multiplier-display">МНОЖИТЕЛЬ: x1</div>
+        <div id="shares-display" style="display:none;">АКЦИИ: 0 💎</div>
+    </div>
+    
+    <!-- CITY TAB -->
+    <div id="tab-city" class="tab-content active">
+        <div class="main-btn-container"><button class="main-btn" onclick="clickMoney(event)">GO!</button></div>
 
-        <div class="money-display">
-            <div id="event-banner"
-                style="display:none; background:#e74c3c; color:white; font-weight:bold; text-align:center; padding:8px; border-radius:5px; margin-bottom:10px; animation: pulse 1s infinite alternate; border:2px solid #c0392b;">
+        <div class="shop-grid">
+            <div class="upgrade-card">
+                <div class="upgrade-header header-auto">Ларёк</div>
+                <p style="font-size: 11px; margin: 5px 0;">+1 к базовому доходу</p>
+                <button id="buyAuto" class="buy-btn" onclick="buyAuto(event)">КУПИТЬ</button>
             </div>
-            <div id="balance">0 💰</div>
-            <div id="gps">ДОХОД: 0/СЕК</div>
-            <div id="multiplier-display">МНОЖИТЕЛЬ: x1</div>
-            <div id="shares-display" style="display:none;">АКЦИИ: 0 💎</div>
-        </div>
-
-        <!-- CITY TAB -->
-        <div id="tab-city" class="tab-content active">
-            <div class="main-btn-container"><button class="main-btn" onclick="clickMoney(event)">GO!</button></div>
-
-            <div class="shop-grid">
-                <div class="upgrade-card">
-                    <div class="upgrade-header header-auto">Ларёк</div>
-                    <p style="font-size: 11px; margin: 5px 0;">+1 к базовому доходу</p>
-                    <button id="buyAuto" class="buy-btn" onclick="buyAuto(event)">КУПИТЬ</button>
-                </div>
-                <div class="upgrade-card">
-                    <div class="upgrade-header header-farm">Ферма</div>
-                    <p style="font-size: 11px; margin: 5px 0;">+10 к базовому доходу</p>
-                    <button id="buyFarm" class="buy-btn" onclick="buyFarm(event)">КУПИТЬ</button>
-                </div>
-                <div class="upgrade-card" style="grid-column: 1 / -1;">
-                    <div class="upgrade-header header-rebirth">Перераспределение</div>
-                    <p style="font-size: 11px; margin: 5px 0;">Сброс прогресса ради x1.5 множителя и Акций 💎</p>
-                    <button id="buyRebirth" class="buy-btn rebirth-btn" onclick="doRebirth(event)">ЗАГРУЗКА...</button>
-                </div>
+            <div class="upgrade-card">
+                <div class="upgrade-header header-farm">Ферма</div>
+                <p style="font-size: 11px; margin: 5px 0;">+10 к базовому доходу</p>
+                <button id="buyFarm" class="buy-btn" onclick="buyFarm(event)">КУПИТЬ</button>
             </div>
-        </div>
-
-        <!-- RUNES TAB -->
-        <div id="tab-runes" class="tab-content">
-            <div style="display: flex; gap: 5px; margin-bottom: 10px;">
-                <button class="btn-info" style="margin-bottom: 0;"
-                    onclick="document.getElementById('modal-runes').style.display='flex'">ℹ️ Шансы и инфо</button>
-                <button class="btn-info" style="margin-bottom: 0; background: #e67e22; box-shadow: 0 3px 0 #d35400;"
-                    onclick="openInventory()">🎒 Инвентарь</button>
-            </div>
-            <div class="rune-grid">
-                <div class="rune-card">
-                    <h4>Кейс Времени</h4>
-                    <p>Пассивный доход (до +250%). Текущий ур: <span id="rune-time-lvl">0</span></p>
-                    <button class="rune-btn" onclick="pullRune('time')">Открыть (1 💎)</button>
-                </div>
-                <div class="rune-card">
-                    <h4>Кейс Богатства</h4>
-                    <p>Доход за клик (до +250%). Текущий ур: <span id="rune-wealth-lvl">0</span></p>
-                    <button class="rune-btn" onclick="pullRune('wealth')">Открыть (1 💎)</button>
-                </div>
-                <div class="rune-card">
-                    <h4>Кейс Инвестора</h4>
-                    <p>Скидка на здания (до 30%). Текущий ур: <span id="rune-inv-lvl">0</span></p>
-                    <button class="rune-btn" onclick="pullRune('investor')">Открыть (1 💎)</button>
-                </div>
-                <div class="rune-card monopoly-case">
-                    <h4>Кейс "Монополия"</h4>
-                    <p>Шанс выбить супер-бонусы (Золотой Клевер, Монополист)</p>
-                    <button class="rune-btn" onclick="pullMonopolyCase()">Открыть (5 💎)</button>
-                </div>
-            </div>
-            <div id="rune-stats"
-                style="margin-top:10px; font-size:12px; font-weight:bold; color:#e74c3c; text-align:center;"></div>
-        </div>
-
-        <!-- CASINO TAB -->
-        <div id="tab-casino" class="tab-content">
-            <div class="casino-panel">
-                <h3 style="margin:0 0 5px 0; text-align:center;">🔴 РУЛЕТКА 🟢</h3>
-                <div class="roulette-timer" id="rl-timer">--</div>
-                <input type="number" id="rl-bet" class="bet-input" placeholder="Ставка 💰">
-                <div class="bet-buttons" style="margin-top:5px;">
-                    <button class="bet-btn bet-red" onclick="placeRouletteBet('red')">КРАСНОЕ (x2)</button>
-                    <button class="bet-btn bet-green" onclick="placeRouletteBet('green')">ЗЕЛЕНОЕ (x14)</button>
-                    <button class="bet-btn bet-black" onclick="placeRouletteBet('black')">ЧЕРНОЕ (x2)</button>
-                </div>
-                <div class="roulette-history" id="rl-history">Ожидание ставок...</div>
-            </div>
-
-            <div class="casino-panel">
-                <h3 style="margin:0 0 5px 0; text-align:center;">⚔️ ДУЭЛИ (x2) ⚔️</h3>
-                <input type="number" id="duel-amount" class="bet-input" placeholder="Ставка на дуэль 💰">
-                <button class="buy-btn" style="margin-top:5px;" onclick="createDuel()">Создать Дуэль</button>
-                <div class="duel-list" id="duel-list">Загрузка дуэлей...</div>
-            </div>
-        </div>
-
-        <!-- FORBES TAB -->
-        <div id="tab-forbes" class="tab-content">
-            <div class="leaderboard-wrapper">
-                <div class="leaderboard-header">🏆 СПИСКИ FORBES</div>
-                <div class="tabs" style="margin: 5px; font-size: 11px;">
-                    <button class="active" onclick="switchLb('money', this)">Текущие Счета</button>
-                    <button onclick="switchLb('assets', this)">Активы (Ребирт)</button>
-                    <button onclick="switchLb('time', this)">Долгожители</button>
-                </div>
-                <div id="leaderboard-display">Загрузка...</div>
-            </div>
-        </div>
-
-        <!-- SETTINGS TAB -->
-        <div id="tab-settings" class="tab-content">
-            <button class="btn-danger" onclick="deleteAccount()">УДАЛИТЬ АККАУНТ</button>
-            <span class="logout" onclick="logout()">ВЫЙТИ ИЗ АККАУНТА</span>
-        </div>
-
-        <!-- ADMIN TAB -->
-        <div id="tab-admin" class="tab-content">
-            <div
-                style="background: #fff; border: 3px dashed #8e44ad; padding: 10px; border-radius: 10px; text-align: center;">
-                <h3 style="color: #8e44ad; margin-top:0;">КОНСОЛЬ РАЗРАБОТЧИКА</h3>
-                <input type="text" id="admin-target" class="bet-input" placeholder="Ник игрока (цель)">
-                <input type="number" id="admin-val" class="bet-input" placeholder="Значение">
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-top:10px;">
-                    <button class="buy-btn" style="background:#2ecc71;" onclick="adminAction('set_money')">УСТАНОВИТЬ
-                        💰</button>
-                    <button class="buy-btn" style="background:#9b59b6;" onclick="adminAction('set_rebirth')">УСТАНОВИТЬ
-                        ⭐</button>
-                    <button class="buy-btn" style="background:#f39c12;" onclick="adminAction('set_shares')">УСТАНОВИТЬ
-                        💎</button>
-                    <button class="buy-btn" style="background:#e74c3c;" onclick="adminAction('delete_user')">УДАЛИТЬ
-                        ИГРОКА</button>
-                    <button class="buy-btn" style="background:#34495e; grid-column:1/-1;"
-                        onclick="adminAction('wipe_chat')">ОЧИСТИТЬ ЧАТ</button>
-                </div>
-
-                <h4 style="border-bottom: 2px solid #ddd; padding-bottom: 5px; margin-top:15px; margin-bottom: 10px;">
-                    ГЛОБАЛЬНЫЕ ИВЕНТЫ И ОБЪЯВЛЕНИЯ</h4>
-                <input type="text" id="admin-announce" class="bet-input"
-                    placeholder="Текст объявления / Название ивента">
-                <select id="admin-ev-type" class="bet-input" style="margin-top:5px;">
-                    <option value="money_mult">💰 Множитель дохода (x)</option>
-                    <option value="shares_mult">💎 Множитель Акций (x)</option>
-                    <option value="rune_pulls">🔮 Доп. руны с кейсов (+шт)</option>
-                    <option value="building_discount">🏗️ Скидка на здания (%)</option>
-                    <option value="roulette_green">🎰 Множитель Зеленого в рулетке (x)</option>
-                </select>
-                <div style="display:flex; gap:5px; margin-top:5px;">
-                    <input type="number" id="admin-ev-val" class="bet-input" placeholder="Значение бонуса">
-                    <input type="number" id="admin-ev-dur" class="bet-input" placeholder="Длительность (мин)">
-                </div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-top:10px;">
-                    <button class="buy-btn" style="background:#34495e; grid-column:1/-1;"
-                        onclick="adminEvent('broadcast')">📣 ОБЪЯВЛЕНИЕ</button>
-                    <button class="buy-btn" style="background:#2ecc71;" onclick="adminEvent('start_event')">ЗАПУСК
-                        ИВЕНТА</button>
-                    <button class="buy-btn" style="background:#e74c3c;"
-                        onclick="adminEvent('stop_event')">ОСТАНОВИТЬ</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="chat-container">
-            <div id="chat-box"></div>
-            <div class="chat-input-area">
-                <input type="text" id="chat-input" placeholder="Чат игры..." maxlength="50">
-                <button class="send-btn" onclick="sendChatMessage()">></button>
+            <div class="upgrade-card" style="grid-column: 1 / -1;">
+                <div class="upgrade-header header-rebirth">Перераспределение</div>
+                <p style="font-size: 11px; margin: 5px 0;">Сброс прогресса ради x1.5 множителя и Акций 💎</p>
+                <button id="buyRebirth" class="buy-btn rebirth-btn" onclick="doRebirth(event)">ЗАГРУЗКА...</button>
             </div>
         </div>
     </div>
 
-    <!-- INVENTORY MODAL -->
-    <div id="modal-inventory" class="modal-overlay">
-        <div class="modal-box" style="width: 350px;">
-            <button class="modal-close"
-                onclick="document.getElementById('modal-inventory').style.display='none'">X</button>
-            <h3 style="margin-top:0; text-align:center; color:#e67e22;">🎒 ИНВЕНТАРЬ РУН</h3>
+    <!-- RUNES TAB -->
+    <div id="tab-runes" class="tab-content">
+        <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+            <button class="btn-info" style="margin-bottom: 0;" onclick="document.getElementById('modal-runes').style.display='flex'">ℹ️ Шансы и инфо</button>
+            <button class="btn-info" style="margin-bottom: 0; background: #e67e22; box-shadow: 0 3px 0 #d35400;" onclick="openInventory()">🎒 Инвентарь</button>
+        </div>
+        <div class="rune-grid">
+            <div class="rune-card">
+                <h4>Кейс Времени</h4>
+                <p>Пассивный доход (до +250%). Текущий ур: <span id="rune-time-lvl">0</span></p>
+                <button class="rune-btn" onclick="pullRune('time')">Открыть (1 💎)</button>
+            </div>
+            <div class="rune-card">
+                <h4>Кейс Богатства</h4>
+                <p>Доход за клик (до +250%). Текущий ур: <span id="rune-wealth-lvl">0</span></p>
+                <button class="rune-btn" onclick="pullRune('wealth')">Открыть (1 💎)</button>
+            </div>
+            <div class="rune-card">
+                <h4>Кейс Инвестора</h4>
+                <p>Скидка на здания (до 30%). Текущий ур: <span id="rune-inv-lvl">0</span></p>
+                <button class="rune-btn" onclick="pullRune('investor')">Открыть (1 💎)</button>
+            </div>
+            <div class="rune-card monopoly-case">
+                <h4>Кейс "Монополия"</h4>
+                <p>Шанс выбить супер-бонусы (Золотой Клевер, Монополист)</p>
+                <button class="rune-btn" onclick="pullMonopolyCase()">Открыть (5 💎)</button>
+            </div>
+        </div>
+        <div id="rune-stats" style="margin-top:10px; font-size:12px; font-weight:bold; color:#e74c3c; text-align:center;"></div>
+    </div>
 
-            <h4 style="border-bottom: 2px solid #ddd; padding-bottom: 5px; margin-bottom: 10px;">Экипированные Руны</h4>
-            <div id="inv-runes" style="display:flex; flex-direction:column; gap:8px;"></div>
+    <!-- CASINO TAB -->
+    <div id="tab-casino" class="tab-content">
+        <div class="casino-panel">
+            <h3 style="margin:0 0 5px 0; text-align:center;">🔴 РУЛЕТКА 🟢</h3>
+            <div class="roulette-timer" id="rl-timer">--</div>
+            <input type="number" id="rl-bet" class="bet-input" placeholder="Ставка 💰">
+            <div class="bet-buttons" style="margin-top:5px;">
+                <button class="bet-btn bet-red" onclick="placeRouletteBet('red')">КРАСНОЕ (x2)</button>
+                <button class="bet-btn bet-green" onclick="placeRouletteBet('green')">ЗЕЛЕНОЕ (x14)</button>
+                <button class="bet-btn bet-black" onclick="placeRouletteBet('black')">ЧЕРНОЕ (x2)</button>
+            </div>
+            <div class="roulette-history" id="rl-history">Ожидание ставок...</div>
+        </div>
 
-            <h4 style="border-bottom: 2px solid #ddd; padding-bottom: 5px; margin-top:15px; margin-bottom: 10px;">
-                Секретные Артефакты</h4>
-            <div id="inv-artifacts" style="display:flex; flex-wrap:wrap; gap:5px;"></div>
+        <div class="casino-panel">
+            <h3 style="margin:0 0 5px 0; text-align:center;">⚔️ ДУЭЛИ (x2) ⚔️</h3>
+            <input type="number" id="duel-amount" class="bet-input" placeholder="Ставка на дуэль 💰">
+            <button class="buy-btn" style="margin-top:5px;" onclick="createDuel()">Создать Дуэль</button>
+            <div class="duel-list" id="duel-list">Загрузка дуэлей...</div>
         </div>
     </div>
 
-    <!-- INFO MODAL -->
-    <div id="modal-runes" class="modal-overlay">
-        <div class="modal-box">
-            <button class="modal-close" onclick="document.getElementById('modal-runes').style.display='none'">X</button>
-            <h3 style="margin-top:0;">Шансы и эффекты рун</h3>
-            <p style="font-size:12px; color:#555;">При открытии рун вы получаете случайный уровень (до 5). Если выпадает
-                уровень меньше текущего, он сгорает. Эффекты не суммируются, берется максимум.</p>
-
-            <b>Базовые кейсы (Шансы)</b>
-            <ul style="font-size:12px; margin:5px 0;">
-                <li>Обычная (Ур 1) — 60%</li>
-                <li>Редкая (Ур 2) — 25%</li>
-                <li>Эпическая (Ур 3) — 10%</li>
-                <li>Легендарная (Ур 4) — 4.5%</li>
-                <li>Мифическая (Ур 5) — 0.5%</li>
-            </ul>
-
-            <b>Эффекты рун (Время / Богатство)</b>
-            <ul style="font-size:12px; margin:5px 0;">
-                <li>Ур 1: +10% | Ур 2: +25% | Ур 3: +50%</li>
-                <li>Ур 4: +100% | Ур 5: +250%</li>
-            </ul>
-
-            <b>Эффекты скидки (Инвестор)</b>
-            <ul style="font-size:12px; margin:5px 0;">
-                <li>Ур 1: -5% | Ур 2: -10% | Ур 3: -15%</li>
-                <li>Ур 4: -20% | Ур 5: -30%</li>
-            </ul>
-            <hr>
-            <b>Кейс "Монополия" (5 Акций)</b>
-            <ul style="font-size:12px; margin:5px 0;">
-                <li><b>Пустота</b> (97%) — Ничего.</li>
-                <li><b>Двойная выгода</b> (2%) — Дает навсегда +1 руну при каждом открытии базовых кейсов. Можно
-                    стакать!</li>
-                <li><b>Золотой Клевер</b> (0.999%) — Удваивает шанс выпадения редких и мифических рун навсегда.</li>
-                <li><b>Монополист</b> (0.001%) — Умножает на 2 получаемые Акции при перераспределении.</li>
-            </ul>
+    <!-- FORBES TAB -->
+    <div id="tab-forbes" class="tab-content">
+        <div class="leaderboard-wrapper">
+            <div class="leaderboard-header">🏆 СПИСКИ FORBES</div>
+            <div class="tabs" style="margin: 5px; font-size: 11px;">
+                <button class="active" onclick="switchLb('money', this)">Текущие Счета</button>
+                <button onclick="switchLb('assets', this)">Активы (Ребирт)</button>
+                <button onclick="switchLb('time', this)">Долгожители</button>
+            </div>
+            <div id="leaderboard-display">Загрузка...</div>
         </div>
     </div>
 
-    <script>
-        const SERVER_URL = 'https://NikitosBbarbbos.pythonanywhere.com'; // Для продакшена замените на Render URL
+    <!-- SETTINGS TAB -->
+    <div id="tab-settings" class="tab-content">
+        <button class="btn-danger" onclick="deleteAccount()">УДАЛИТЬ АККАУНТ</button>
+        <span class="logout" onclick="logout()">ВЫЙТИ ИЗ АККАУНТА</span>
+    </div>
 
-        let playerName = localStorage.getItem('nb_v5_name');
-        let playerPass = localStorage.getItem('nb_v5_pass');
+    <!-- ADMIN TAB -->
+    <div id="tab-admin" class="tab-content">
+        <div style="background: #fff; border: 3px dashed #8e44ad; padding: 10px; border-radius: 10px; text-align: center;">
+            <h3 style="color: #8e44ad; margin-top:0;">КОНСОЛЬ РАЗРАБОТЧИКА</h3>
+            <input type="text" id="admin-target" class="bet-input" placeholder="Ник игрока (цель)">
+            <input type="number" id="admin-val" class="bet-input" placeholder="Значение">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-top:10px;">
+                <button class="buy-btn" style="background:#2ecc71;" onclick="adminAction('set_money')">УСТАНОВИТЬ 💰</button>
+                <button class="buy-btn" style="background:#9b59b6;" onclick="adminAction('set_rebirth')">УСТАНОВИТЬ ⭐</button>
+                <button class="buy-btn" style="background:#f39c12;" onclick="adminAction('set_shares')">УСТАНОВИТЬ 💎</button>
+                <button class="buy-btn" style="background:#e74c3c;" onclick="adminAction('delete_user')">УДАЛИТЬ ИГРОКА</button>
+                <button class="buy-btn" style="background:#34495e; grid-column:1/-1;" onclick="adminAction('wipe_chat')">ОЧИСТИТЬ ЧАТ</button>
+            </div>
+            
+            <h4 style="border-bottom: 2px solid #ddd; padding-bottom: 5px; margin-top:15px; margin-bottom: 10px;">ГЛОБАЛЬНЫЕ ИВЕНТЫ И ОБЪЯВЛЕНИЯ</h4>
+            <input type="text" id="admin-announce" class="bet-input" placeholder="Текст объявления / Название ивента">
+            <select id="admin-ev-type" class="bet-input" style="margin-top:5px;">
+                <option value="money_mult">💰 Множитель дохода (x)</option>
+                <option value="shares_mult">💎 Множитель Акций (x)</option>
+                <option value="rune_pulls">🔮 Доп. руны с кейсов (+шт)</option>
+                <option value="building_discount">🏗️ Скидка на здания (%)</option>
+                <option value="roulette_green">🎰 Множитель Зеленого в рулетке (x)</option>
+            </select>
+            <div style="display:flex; gap:5px; margin-top:5px;">
+                <input type="number" id="admin-ev-val" class="bet-input" placeholder="Значение бонуса">
+                <input type="number" id="admin-ev-dur" class="bet-input" placeholder="Длительность (мин)">
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-top:10px;">
+                <button class="buy-btn" style="background:#34495e; grid-column:1/-1;" onclick="adminEvent('broadcast')">📣 ОБЪЯВЛЕНИЕ</button>
+                <button class="buy-btn" style="background:#2ecc71;" onclick="adminEvent('start_event')">ЗАПУСК ИВЕНТА</button>
+                <button class="buy-btn" style="background:#e74c3c;" onclick="adminEvent('stop_event')">ОСТАНОВИТЬ</button>
+            </div>
+        </div>
+    </div>
 
-        let state = {
-            money: 0, upgrades: 0, upgradeCost: 10,
-            farms: 0, farmCost: 1000, rebirth: 0, multiplier: 1,
-            shares: 0,
-            runes: { time_level: 0, wealth_level: 0, investor_level: 0, extra_pulls: 0, golden_clover: false, monopolist: false },
-            lastSaveTime: 0,
-            total_assets: 0,
-            playtime_seconds: 0
-        };
+    <div class="chat-container">
+        <div id="chat-box"></div>
+        <div class="chat-input-area">
+            <input type="text" id="chat-input" placeholder="Чат игры..." maxlength="50">
+            <button class="send-btn" onclick="sendChatMessage()">></button>
+        </div>
+    </div>
+</div>
 
-        let processedRouletteTimes = [];
-        let processedDuels = [];
-        let leaderboardData = { money: [], assets: [], time: [] };
-        let currentLbTab = 'money';
-        let activeEventType = null;
-        let activeEventValue = 0;
-        let lastAnnounceTime = 0;
+<!-- INVENTORY MODAL -->
+<div id="modal-inventory" class="modal-overlay">
+    <div class="modal-box" style="width: 350px;">
+        <button class="modal-close" onclick="document.getElementById('modal-inventory').style.display='none'">X</button>
+        <h3 style="margin-top:0; text-align:center; color:#e67e22;">🎒 ИНВЕНТАРЬ РУН</h3>
+        
+        <h4 style="border-bottom: 2px solid #ddd; padding-bottom: 5px; margin-bottom: 10px;">Экипированные Руны</h4>
+        <div id="inv-runes" style="display:flex; flex-direction:column; gap:8px;"></div>
+        
+        <h4 style="border-bottom: 2px solid #ddd; padding-bottom: 5px; margin-top:15px; margin-bottom: 10px;">Секретные Артефакты</h4>
+        <div id="inv-artifacts" style="display:flex; flex-wrap:wrap; gap:5px;"></div>
+    </div>
+</div>
 
-        const RUNE_BONUS = [0, 0.1, 0.25, 0.5, 1.0, 2.5];
-        const INV_BONUS = [0, 0.05, 0.1, 0.15, 0.2, 0.3];
+<!-- INFO MODAL -->
+<div id="modal-runes" class="modal-overlay">
+    <div class="modal-box">
+        <button class="modal-close" onclick="document.getElementById('modal-runes').style.display='none'">X</button>
+        <h3 style="margin-top:0;">Шансы и эффекты рун</h3>
+        <p style="font-size:12px; color:#555;">При открытии рун вы получаете случайный уровень (до 5). Если выпадает уровень меньше текущего, он сгорает. Эффекты не суммируются, берется максимум.</p>
+        
+        <b>Базовые кейсы (Шансы)</b>
+        <ul style="font-size:12px; margin:5px 0;">
+            <li>Обычная (Ур 1) — 60%</li>
+            <li>Редкая (Ур 2) — 25%</li>
+            <li>Эпическая (Ур 3) — 10%</li>
+            <li>Легендарная (Ур 4) — 4.5%</li>
+            <li>Мифическая (Ур 5) — 0.5%</li>
+        </ul>
+        
+        <b>Эффекты рун (Время / Богатство)</b>
+        <ul style="font-size:12px; margin:5px 0;">
+            <li>Ур 1: +10% | Ур 2: +25% | Ур 3: +50%</li>
+            <li>Ур 4: +100% | Ур 5: +250%</li>
+        </ul>
+        
+        <b>Эффекты скидки (Инвестор)</b>
+        <ul style="font-size:12px; margin:5px 0;">
+            <li>Ур 1: -5% | Ур 2: -10% | Ур 3: -15%</li>
+            <li>Ур 4: -20% | Ур 5: -30%</li>
+        </ul>
+        <hr>
+        <b>Кейс "Монополия" (5 Акций)</b>
+        <ul style="font-size:12px; margin:5px 0;">
+            <li><b>Пустота</b> (97%) — Ничего.</li>
+            <li><b>Двойная выгода</b> (2%) — Дает навсегда +1 руну при каждом открытии базовых кейсов. Можно стакать!</li>
+            <li><b>Золотой Клевер</b> (0.999%) — Удваивает шанс выпадения редких и мифических рун навсегда.</li>
+            <li><b>Монополист</b> (0.001%) — Умножает на 2 получаемые Акции при перераспределении.</li>
+        </ul>
+    </div>
+</div>
 
-        function showTab(tabId, btn) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.getElementById('tab-' + tabId).classList.add('active');
-            document.querySelectorAll('.monopoly-board > .tabs button').forEach(el => el.classList.remove('active'));
-            if (btn) btn.classList.add('active');
+<script>
+    const SERVER_URL = 'https://NikitosBbarbbos.pythonanywhere.com'; // Для продакшена замените на Render URL
+    
+    let playerName = localStorage.getItem('nb_v5_name');
+    let playerPass = localStorage.getItem('nb_v5_pass');
 
-            if (tabId === 'runes') document.getElementById('shares-display').style.display = 'block';
-            else document.getElementById('shares-display').style.display = 'none';
+    let state = { 
+        money: 0, upgrades: 0, upgradeCost: 10,
+        farms: 0, farmCost: 1000, rebirth: 0, multiplier: 1,
+        shares: 0,
+        runes: { time_level: 0, wealth_level: 0, investor_level: 0, extra_pulls: 0, golden_clover: false, monopolist: false },
+        lastSaveTime: 0,
+        total_assets: 0,
+        playtime_seconds: 0
+    };
+
+    let processedRouletteTimes = [];
+    let processedDuels = [];
+    let leaderboardData = { money: [], assets: [], time: [] };
+    let currentLbTab = 'money';
+    let activeEvents = [];
+    let lastAnnounceTime = parseFloat(localStorage.getItem('nb_v5_announce') || '0');
+
+    const RUNE_BONUS = [0, 0.1, 0.25, 0.5, 1.0, 2.5];
+    const INV_BONUS = [0, 0.05, 0.1, 0.15, 0.2, 0.3];
+
+    function showTab(tabId, btn) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.getElementById('tab-' + tabId).classList.add('active');
+        document.querySelectorAll('.monopoly-board > .tabs button').forEach(el => el.classList.remove('active'));
+        if(btn) btn.classList.add('active');
+        
+        if (tabId === 'runes') document.getElementById('shares-display').style.display = 'block';
+        else document.getElementById('shares-display').style.display = 'none';
+    }
+
+    function switchLb(type, btn) {
+        currentLbTab = type;
+        document.querySelectorAll('#tab-forbes .tabs button').forEach(el => el.classList.remove('active'));
+        if(btn) btn.classList.add('active');
+        renderLb();
+    }
+
+    function formatTime(sec) {
+        if(sec < 60) return `${sec}с`;
+        if(sec < 3600) return `${Math.floor(sec/60)}м`;
+        return `${Math.floor(sec/3600)}ч ${Math.floor((sec%3600)/60)}м`;
+    }
+
+    function renderLb() {
+        let data = leaderboardData[currentLbTab] || [];
+        let html = "";
+        data.forEach((d, i) => {
+            let val = d[1];
+            if (currentLbTab === 'money' || currentLbTab === 'assets') val = Math.floor(val) + " 💰";
+            else if (currentLbTab === 'time') val = formatTime(val);
+            html += `<div class="lb-row"><div><b>${i+1}. ${d[0]}</b> [⭐${d[2]}]</div><div>${val}</div></div>`;
+        });
+        if(html === "") html = "Загрузка...";
+        document.getElementById('leaderboard-display').innerHTML = html;
+    }
+
+    function spawnFloatingText(text, x, y, color) {
+        const el = document.createElement('div');
+        el.className = 'floating-text'; el.innerText = text;
+        el.style.left = (x - 20 + Math.random() * 40) + 'px'; el.style.top = (y - 20) + 'px'; el.style.color = color;
+        document.body.appendChild(el); setTimeout(() => el.remove(), 1000);
+    }
+
+    function getRebirthCost(tier) { return 50000 * Math.pow(2, tier); }
+    
+    function getIncome() {
+        let base = (state.upgrades * 1 + state.farms * 10) * state.multiplier;
+        let timeMultiplier = 1 + RUNE_BONUS[state.runes.time_level || 0];
+        let evMult = 1;
+        activeEvents.forEach(e => { if(e.type === 'money_mult') evMult *= e.value; });
+        return base * timeMultiplier * evMult;
+    }
+
+    function getClickIncome() {
+        let base = 1 * state.multiplier;
+        let wealthMultiplier = 1 + RUNE_BONUS[state.runes.wealth_level || 0];
+        let evMult = 1;
+        activeEvents.forEach(e => { if(e.type === 'money_mult') evMult *= e.value; });
+        return base * wealthMultiplier * evMult;
+    }
+
+    function getDiscount() { 
+        let baseD = INV_BONUS[state.runes.investor_level || 0]; 
+        let eventD = 0;
+        activeEvents.forEach(e => { if(e.type === 'building_discount') eventD += (e.value / 100); });
+        return Math.max(0.1, 1 - baseD - eventD); // Максимум 90% скидка
+    }
+
+    function updateUI() {
+        document.getElementById('balance').innerText = Math.floor(state.money) + " 💰";
+        document.getElementById('gps').innerText = "ДОХОД: " + getIncome().toFixed(1) + "/СЕК";
+        document.getElementById('multiplier-display').innerText = `МНОЖИТЕЛЬ: x${state.multiplier.toFixed(2)} (Ур: ${state.rebirth}/20)`;
+        document.getElementById('shares-display').innerText = `АКЦИИ: ${state.shares} 💎`;
+        
+        let cAuto = Math.round(state.upgradeCost * getDiscount());
+        document.getElementById('buyAuto').innerText = `${cAuto} 💰 (У вас: ${state.upgrades})`;
+        document.getElementById('buyAuto').disabled = state.money < cAuto;
+
+        let cFarm = Math.round(state.farmCost * getDiscount());
+        document.getElementById('buyFarm').innerText = `${cFarm} 💰 (У вас: ${state.farms})`;
+        document.getElementById('buyFarm').disabled = state.money < cFarm;
+
+        const btnRebirth = document.getElementById('buyRebirth');
+        if (state.rebirth < 20) {
+            let nextCost = getRebirthCost(state.rebirth);
+            let eventSharesMult = 1;
+            activeEvents.forEach(e => { if(e.type === 'shares_mult') eventSharesMult *= e.value; });
+            let nextShares = (state.rebirth + 1) * (state.runes.monopolist ? 2 : 1) * eventSharesMult;
+            btnRebirth.innerText = `ПЕРЕРАСПРЕДЕЛИТЬ (${nextCost} 💰) -> +${nextShares} 💎`;
+            btnRebirth.disabled = state.money < nextCost;
+        } else {
+            btnRebirth.innerText = "МАКСИМУМ (20/20)"; btnRebirth.disabled = true;
         }
 
-        function switchLb(type, btn) {
-            currentLbTab = type;
-            document.querySelectorAll('#tab-forbes .tabs button').forEach(el => el.classList.remove('active'));
-            if (btn) btn.classList.add('active');
-            renderLb();
+        let rbText = state.rebirth > 0 ? ` [⭐${state.rebirth}]` : "";
+        document.getElementById('user-info').innerText = playerName ? `${playerName}${rbText}` : "ВХОД...";
+
+        if(playerName === 'NB') {
+            document.getElementById('admin-tab-btn').style.display = 'block';
         }
 
-        function formatTime(sec) {
-            if (sec < 60) return `${sec}с`;
-            if (sec < 3600) return `${Math.floor(sec / 60)}м`;
-            return `${Math.floor(sec / 3600)}ч ${Math.floor((sec % 3600) / 60)}м`;
-        }
+        // Runes UI
+        document.getElementById('rune-time-lvl').innerText = state.runes.time_level || 0;
+        document.getElementById('rune-wealth-lvl').innerText = state.runes.wealth_level || 0;
+        document.getElementById('rune-inv-lvl').innerText = state.runes.investor_level || 0;
+        
+        let stats = [];
+        if(state.runes.extra_pulls) stats.push(`+${state.runes.extra_pulls} к круткам рун`);
+        if(state.runes.golden_clover) stats.push(`Золотой Клевер (x2 удача)`);
+        if(state.runes.monopolist) stats.push(`Монополист (x2 Акций)`);
+        document.getElementById('rune-stats').innerText = stats.join(' | ');
+    }
 
-        function renderLb() {
-            let data = leaderboardData[currentLbTab] || [];
-            let html = "";
-            data.forEach((d, i) => {
-                let val = d[1];
-                if (currentLbTab === 'money' || currentLbTab === 'assets') val = Math.floor(val) + " 💰";
-                else if (currentLbTab === 'time') val = formatTime(val);
-                html += `<div class="lb-row"><div><b>${i + 1}. ${d[0]}</b> [⭐${d[2]}]</div><div>${val}</div></div>`;
+    function checkAFK() {
+        if (state.lastSaveTime) {
+            let diffSec = (Date.now() - state.lastSaveTime) / 1000;
+            if (diffSec > 86400) diffSec = 86400; // 24 hours max
+            let earned = diffSec * getIncome();
+            if (earned > 10) {
+                state.money += earned;
+                state.total_assets += earned;
+                state.playtime_seconds += diffSec;
+                alert(`Вас не было ${Math.floor(diffSec/60)} минут.\nАФК Доход: ${Math.floor(earned)} 💰`);
+            }
+        }
+        state.lastSaveTime = Date.now();
+        updateUI();
+    }
+
+    function clickMoney(e) { 
+        let earn = getClickIncome();
+        state.money += earn; 
+        state.total_assets += earn;
+        spawnFloatingText(`+${earn.toFixed(1)}`, e.clientX, e.clientY, '#2ecc71');
+        updateUI(); 
+    }
+
+    function buyAuto(e) {
+        let cost = Math.round(state.upgradeCost * getDiscount());
+        if (state.money >= cost) {
+            spawnFloatingText(`-${cost}`, e.clientX, e.clientY, '#e74c3c');
+            state.money -= cost; state.upgrades++; state.upgradeCost = Math.round(state.upgradeCost * 1.15);
+            updateUI(); saveLocal();
+        }
+    }
+
+    function buyFarm(e) {
+        let cost = Math.round(state.farmCost * getDiscount());
+        if (state.money >= cost) {
+            spawnFloatingText(`-${cost}`, e.clientX, e.clientY, '#e74c3c');
+            state.money -= cost; state.farms++; state.farmCost = Math.round(state.farmCost * 1.15);
+            updateUI(); saveLocal();
+        }
+    }
+
+    function doRebirth(e) {
+        if (state.rebirth >= 20) return;
+        let cost = getRebirthCost(state.rebirth);
+        if (state.money >= cost) {
+            if (confirm(`Сбросить прогресс ради множителя x1.5 и Акций Монополии? Ваши АКТИВЫ будут сброшены!`)) {
+                spawnFloatingText(`ПЕРЕРАСПРЕДЕЛЕНИЕ!`, e.clientX, e.clientY, '#9b59b6');
+                state.rebirth++;
+                state.multiplier = Math.pow(1.5, state.rebirth);
+                let eventSharesMult = 1;
+                activeEvents.forEach(e => { if(e.type === 'shares_mult') eventSharesMult *= e.value; });
+                let sharesToGive = state.rebirth * (state.runes.monopolist ? 2 : 1) * eventSharesMult;
+                state.shares += sharesToGive;
+                state.money = 0; state.upgrades = 0; state.upgradeCost = 10; state.farms = 0; state.farmCost = 1000;
+                state.total_assets = 0; // Reset assets on rebirth
+                updateUI(); saveLocal(); saveOnline();
+                alert(`Вы получили ${sharesToGive} Акций Монополии 💎!`);
+            }
+        }
+    }
+
+    // --- ADMIN ACTIONS ---
+    async function adminAction(type) {
+        const target = document.getElementById('admin-target').value.trim();
+        let val = parseInt(document.getElementById('admin-val').value) || 0;
+        
+        if (type !== 'wipe_chat' && !target) return alert("Введите ник цели!");
+        
+        if (type === 'delete_user' && !confirm(`Точно удалить игрока ${target}?`)) return;
+        if (type === 'wipe_chat' && !confirm(`Точно очистить весь чат?`)) return;
+
+        try {
+            const r = await fetch(`${SERVER_URL}/admin_cmd`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: playerName, password: playerPass, target: target, command: type, value: val })
             });
-            if (html === "") html = "Загрузка...";
-            document.getElementById('leaderboard-display').innerHTML = html;
-        }
-
-        function spawnFloatingText(text, x, y, color) {
-            const el = document.createElement('div');
-            el.className = 'floating-text'; el.innerText = text;
-            el.style.left = (x - 20 + Math.random() * 40) + 'px'; el.style.top = (y - 20) + 'px'; el.style.color = color;
-            document.body.appendChild(el); setTimeout(() => el.remove(), 1000);
-        }
-
-        function getRebirthCost(tier) { return 50000 * Math.pow(2, tier); }
-
-        function getIncome() {
-            let base = (state.upgrades * 1 + state.farms * 10) * state.multiplier;
-            let timeMultiplier = 1 + RUNE_BONUS[state.runes.time_level || 0];
-            let evMult = (activeEventType === 'money_mult') ? activeEventValue : 1;
-            return base * timeMultiplier * evMult;
-        }
-
-        function getClickIncome() {
-            let base = 1 * state.multiplier;
-            let wealthMultiplier = 1 + RUNE_BONUS[state.runes.wealth_level || 0];
-            let evMult = (activeEventType === 'money_mult') ? activeEventValue : 1;
-            return base * wealthMultiplier * evMult;
-        }
-
-        function getDiscount() {
-            let baseD = INV_BONUS[state.runes.investor_level || 0];
-            let eventD = (activeEventType === 'building_discount') ? (activeEventValue / 100) : 0;
-            return Math.max(0, 1 - baseD - eventD);
-        }
-
-        function updateUI() {
-            document.getElementById('balance').innerText = Math.floor(state.money) + " 💰";
-            document.getElementById('gps').innerText = "ДОХОД: " + getIncome().toFixed(1) + "/СЕК";
-            document.getElementById('multiplier-display').innerText = `МНОЖИТЕЛЬ: x${state.multiplier.toFixed(2)} (Ур: ${state.rebirth}/20)`;
-            document.getElementById('shares-display').innerText = `АКЦИИ: ${state.shares} 💎`;
-
-            let cAuto = Math.round(state.upgradeCost * getDiscount());
-            document.getElementById('buyAuto').innerText = `${cAuto} 💰 (У вас: ${state.upgrades})`;
-            document.getElementById('buyAuto').disabled = state.money < cAuto;
-
-            let cFarm = Math.round(state.farmCost * getDiscount());
-            document.getElementById('buyFarm').innerText = `${cFarm} 💰 (У вас: ${state.farms})`;
-            document.getElementById('buyFarm').disabled = state.money < cFarm;
-
-            const btnRebirth = document.getElementById('buyRebirth');
-            if (state.rebirth < 20) {
-                let nextCost = getRebirthCost(state.rebirth);
-                let eventSharesMult = (activeEventType === 'shares_mult') ? activeEventValue : 1;
-                let nextShares = (state.rebirth + 1) * (state.runes.monopolist ? 2 : 1) * eventSharesMult;
-                btnRebirth.innerText = `ПЕРЕРАСПРЕДЕЛИТЬ (${nextCost} 💰) -> +${nextShares} 💎`;
-                btnRebirth.disabled = state.money < nextCost;
-            } else {
-                btnRebirth.innerText = "МАКСИМУМ (20/20)"; btnRebirth.disabled = true;
-            }
-
-            let rbText = state.rebirth > 0 ? ` [⭐${state.rebirth}]` : "";
-            document.getElementById('user-info').innerText = playerName ? `${playerName}${rbText}` : "ВХОД...";
-
-            if (playerName === 'NB') {
-                document.getElementById('admin-tab-btn').style.display = 'block';
-            }
-
-            // Runes UI
-            document.getElementById('rune-time-lvl').innerText = state.runes.time_level || 0;
-            document.getElementById('rune-wealth-lvl').innerText = state.runes.wealth_level || 0;
-            document.getElementById('rune-inv-lvl').innerText = state.runes.investor_level || 0;
-
-            let stats = [];
-            if (state.runes.extra_pulls) stats.push(`+${state.runes.extra_pulls} к круткам рун`);
-            if (state.runes.golden_clover) stats.push(`Золотой Клевер (x2 удача)`);
-            if (state.runes.monopolist) stats.push(`Монополист (x2 Акций)`);
-            document.getElementById('rune-stats').innerText = stats.join(' | ');
-        }
-
-        function checkAFK() {
-            if (state.lastSaveTime) {
-                let diffSec = (Date.now() - state.lastSaveTime) / 1000;
-                if (diffSec > 86400) diffSec = 86400; // 24 hours max
-                let earned = diffSec * getIncome();
-                if (earned > 10) {
-                    state.money += earned;
-                    state.total_assets += earned;
-                    state.playtime_seconds += diffSec;
-                    alert(`Вас не было ${Math.floor(diffSec / 60)} минут.\nАФК Доход: ${Math.floor(earned)} 💰`);
-                }
-            }
-            state.lastSaveTime = Date.now();
-            updateUI();
-        }
-
-        function clickMoney(e) {
-            let earn = getClickIncome();
-            state.money += earn;
-            state.total_assets += earn;
-            spawnFloatingText(`+${earn.toFixed(1)}`, e.clientX, e.clientY, '#2ecc71');
-            updateUI();
-        }
-
-        function buyAuto(e) {
-            let cost = Math.round(state.upgradeCost * getDiscount());
-            if (state.money >= cost) {
-                spawnFloatingText(`-${cost}`, e.clientX, e.clientY, '#e74c3c');
-                state.money -= cost; state.upgrades++; state.upgradeCost = Math.round(state.upgradeCost * 1.15);
-                updateUI(); saveLocal();
-            }
-        }
-
-        function buyFarm(e) {
-            let cost = Math.round(state.farmCost * getDiscount());
-            if (state.money >= cost) {
-                spawnFloatingText(`-${cost}`, e.clientX, e.clientY, '#e74c3c');
-                state.money -= cost; state.farms++; state.farmCost = Math.round(state.farmCost * 1.15);
-                updateUI(); saveLocal();
-            }
-        }
-
-        function doRebirth(e) {
-            if (state.rebirth >= 20) return;
-            let cost = getRebirthCost(state.rebirth);
-            if (state.money >= cost) {
-                if (confirm(`Сбросить прогресс ради множителя x1.5 и Акций Монополии? Ваши АКТИВЫ будут сброшены!`)) {
-                    spawnFloatingText(`ПЕРЕРАСПРЕДЕЛЕНИЕ!`, e.clientX, e.clientY, '#9b59b6');
-                    state.rebirth++;
-                    state.multiplier = Math.pow(1.5, state.rebirth);
-                    let eventSharesMult = (activeEventType === 'shares_mult') ? activeEventValue : 1;
-                    let sharesToGive = state.rebirth * (state.runes.monopolist ? 2 : 1) * eventSharesMult;
-                    state.shares += sharesToGive;
-                    state.money = 0; state.upgrades = 0; state.upgradeCost = 10; state.farms = 0; state.farmCost = 1000;
-                    state.total_assets = 0; // Reset assets on rebirth
-                    updateUI(); saveLocal(); saveOnline();
-                    alert(`Вы получили ${sharesToGive} Акций Монополии 💎!`);
-                }
-            }
-        }
-
-        // --- ADMIN ACTIONS ---
-        async function adminAction(type) {
-            const target = document.getElementById('admin-target').value.trim();
-            let val = parseInt(document.getElementById('admin-val').value) || 0;
-
-            if (type !== 'wipe_chat' && !target) return alert("Введите ник цели!");
-
-            if (type === 'delete_user' && !confirm(`Точно удалить игрока ${target}?`)) return;
-            if (type === 'wipe_chat' && !confirm(`Точно очистить весь чат?`)) return;
-
-            try {
-                const r = await fetch(`${SERVER_URL}/admin_cmd`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: playerName, password: playerPass, target: target, command: type, value: val })
-                });
-                const res = await r.json();
-                if (res.status === "success") {
-                    alert(`Команда выполнена!`);
-                    if (target === playerName && type !== 'delete_user' && type !== 'wipe_chat') {
-                        if (type === 'set_money') state.money = val;
-                        if (type === 'set_rebirth') {
-                            state.rebirth = val;
-                            state.multiplier = Math.pow(1.5, val);
-                        }
-                        if (type === 'set_shares') state.shares = val;
-                        updateUI(); saveLocal();
+            const res = await r.json();
+            if (res.status === "success") {
+                alert(`Команда выполнена!`);
+                if (target === playerName && type !== 'delete_user' && type !== 'wipe_chat') {
+                    if (type === 'set_money') state.money = val;
+                    if (type === 'set_rebirth') {
+                        state.rebirth = val;
+                        state.multiplier = Math.pow(1.5, val);
                     }
-                } else { alert("Ошибка: " + res.error); }
-            } catch (e) { alert("Ошибка сети"); }
-        }
+                    if (type === 'set_shares') state.shares = val;
+                    updateUI(); saveLocal();
+                }
+            } else { alert("Ошибка: " + res.error); }
+        } catch (e) { alert("Ошибка сети"); }
+    }
 
-        function showBroadcast(text) {
-            let el = document.getElementById('broadcast-overlay');
-            el.innerText = "📣 ВНИМАНИЕ: " + text;
-            el.style.display = 'block';
-            setTimeout(() => { el.style.display = 'none'; }, 8000);
-        }
+    function showBroadcast(text) {
+        let el = document.getElementById('broadcast-overlay');
+        el.innerText = "📣 ВНИМАНИЕ: " + text;
+        el.style.display = 'block';
+        setTimeout(() => { el.style.display = 'none'; }, 8000);
+    }
 
-        async function adminEvent(action) {
-            const text = document.getElementById('admin-announce').value.trim();
-            const type = document.getElementById('admin-ev-type') ? document.getElementById('admin-ev-type').value : 'money_mult';
-            const val = parseFloat(document.getElementById('admin-ev-val').value) || 1;
-            const dur = parseFloat(document.getElementById('admin-ev-dur').value) || 5;
+    async function adminEvent(action) {
+        const text = document.getElementById('admin-announce').value.trim();
+        const type = document.getElementById('admin-ev-type') ? document.getElementById('admin-ev-type').value : 'money_mult';
+        const val = parseFloat(document.getElementById('admin-ev-val').value) || 1;
+        const dur = parseFloat(document.getElementById('admin-ev-dur').value) || 5;
+        
+        if (action !== 'stop_event' && !text) return alert("Введите текст!");
+        
+        try {
+            await fetch(`${SERVER_URL}/admin_cmd`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: playerName, password: playerPass, command: action, text: text, ev_type: type, value: val, duration: dur })
+            });
+            alert("Команда ивента отправлена!");
+        } catch(e) { alert("Ошибка сети"); }
+    }
 
-            if (action !== 'stop_event' && !text) return alert("Введите текст!");
+    // --- INVENTORY ---
+    function openInventory() {
+        const RARITY_COLORS = ["#bdc3c7", "#ecf0f1", "#3498db", "#9b59b6", "#f1c40f", "#e74c3c"];
+        const RARITY_NAMES = ["Нет", "Обычная", "Редкая", "Эпическая", "Легендарная", "Мифическая"];
 
-            try {
-                await fetch(`${SERVER_URL}/admin_cmd`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: playerName, password: playerPass, command: action, text: text, ev_type: type, value: val, duration: dur })
-                });
-                alert("Команда ивента отправлена!");
-            } catch (e) { alert("Ошибка сети"); }
-        }
-
-        // --- INVENTORY ---
-        function openInventory() {
-            const RARITY_COLORS = ["#bdc3c7", "#ecf0f1", "#3498db", "#9b59b6", "#f1c40f", "#e74c3c"];
-            const RARITY_NAMES = ["Нет", "Обычная", "Редкая", "Эпическая", "Легендарная", "Мифическая"];
-
-            function getRuneHTML(name, level, effectText) {
-                let color = RARITY_COLORS[level || 0];
-                let rName = RARITY_NAMES[level || 0];
-                if (!level) return `<div style="border: 2px dashed #ccc; border-radius: 5px; padding: 8px; background: #f9f9f9; color: #999; font-size: 12px; text-align: center;">${name} не найдена</div>`;
-
-                return `<div style="border: 2px solid ${color}; border-radius: 5px; padding: 8px; background: #fff; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 0 ${color};">
+        function getRuneHTML(name, level, effectText) {
+            let color = RARITY_COLORS[level || 0];
+            let rName = RARITY_NAMES[level || 0];
+            if (!level) return `<div style="border: 2px dashed #ccc; border-radius: 5px; padding: 8px; background: #f9f9f9; color: #999; font-size: 12px; text-align: center;">${name} не найдена</div>`;
+            
+            return `<div style="border: 2px solid ${color}; border-radius: 5px; padding: 8px; background: #fff; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 0 ${color};">
                 <div>
                     <div style="font-weight: bold; font-size: 13px;">${name}</div>
                     <div style="font-size: 11px; color: #555;">${effectText}</div>
                 </div>
-                <div style="background: ${color}; color: ${level === 1 ? '#333' : 'white'}; padding: 3px 6px; border-radius: 3px; font-size: 10px; font-weight: bold;">
+                <div style="background: ${color}; color: ${level===1?'#333':'white'}; padding: 3px 6px; border-radius: 3px; font-size: 10px; font-weight: bold;">
                     ${rName}
                 </div>
             </div>`;
-            }
-
-            let tLvl = state.runes.time_level || 0;
-            let wLvl = state.runes.wealth_level || 0;
-            let iLvl = state.runes.investor_level || 0;
-
-            let htmlRunes = "";
-            htmlRunes += getRuneHTML("⏳ Руна Времени", tLvl, `АФК Доход: +${Math.round(RUNE_BONUS[tLvl] * 100)}%`);
-            htmlRunes += getRuneHTML("💰 Руна Богатства", wLvl, `Доход за клик: +${Math.round(RUNE_BONUS[wLvl] * 100)}%`);
-            htmlRunes += getRuneHTML("🏗️ Руна Инвестора", iLvl, `Скидка на здания: -${Math.round(INV_BONUS[iLvl] * 100)}%`);
-            document.getElementById('inv-runes').innerHTML = htmlRunes;
-
-            let htmlArts = "";
-            if (state.runes.extra_pulls) htmlArts += `<div style="border:2px solid #34495e; padding:5px 8px; border-radius:5px; background:#ecf0f1; font-size:11px; font-weight:bold;">✨ Двойная выгода (x${state.runes.extra_pulls})</div>`;
-            if (state.runes.golden_clover) htmlArts += `<div style="border:2px solid #2ecc71; padding:5px 8px; border-radius:5px; background:#eaffea; font-size:11px; font-weight:bold; color:#27ae60;">🍀 Золотой Клевер</div>`;
-            if (state.runes.monopolist) htmlArts += `<div style="border:2px solid #f39c12; padding:5px 8px; border-radius:5px; background:#fff8e1; font-size:11px; font-weight:bold; color:#d35400;">🎩 Монополист</div>`;
-            if (htmlArts === "") htmlArts = "<div style='font-size:11px; color:#999; text-align:center; width:100%;'>У вас пока нет особых артефактов из кейса Монополии.</div>";
-            document.getElementById('inv-artifacts').innerHTML = htmlArts;
-
-            document.getElementById('modal-inventory').style.display = 'flex';
         }
 
-        // --- GACHA RUNES ---
-        const RUNE_NAMES = ["Ничего", "Обычная", "Редкая", "Эпическая", "Легендарная", "Мифическая"];
-        function pullRune(type) {
-            if (state.shares < 1) return alert("Недостаточно Акций (💎)!");
-            state.shares--;
-            let pulls = 1 + (state.runes.extra_pulls || 0);
-            if (activeEventType === 'rune_pulls') pulls += activeEventValue;
-            let resultsStr = [];
-            let clover = state.runes.golden_clover ? 2 : 1;
+        let tLvl = state.runes.time_level || 0;
+        let wLvl = state.runes.wealth_level || 0;
+        let iLvl = state.runes.investor_level || 0;
+        
+        let htmlRunes = "";
+        htmlRunes += getRuneHTML("⏳ Руна Времени", tLvl, `АФК Доход: +${Math.round(RUNE_BONUS[tLvl]*100)}%`);
+        htmlRunes += getRuneHTML("💰 Руна Богатства", wLvl, `Доход за клик: +${Math.round(RUNE_BONUS[wLvl]*100)}%`);
+        htmlRunes += getRuneHTML("🏗️ Руна Инвестора", iLvl, `Скидка на здания: -${Math.round(INV_BONUS[iLvl]*100)}%`);
+        document.getElementById('inv-runes').innerHTML = htmlRunes;
+        
+        let htmlArts = "";
+        if (state.runes.extra_pulls) htmlArts += `<div style="border:2px solid #34495e; padding:5px 8px; border-radius:5px; background:#ecf0f1; font-size:11px; font-weight:bold;">✨ Двойная выгода (x${state.runes.extra_pulls})</div>`;
+        if (state.runes.golden_clover) htmlArts += `<div style="border:2px solid #2ecc71; padding:5px 8px; border-radius:5px; background:#eaffea; font-size:11px; font-weight:bold; color:#27ae60;">🍀 Золотой Клевер</div>`;
+        if (state.runes.monopolist) htmlArts += `<div style="border:2px solid #f39c12; padding:5px 8px; border-radius:5px; background:#fff8e1; font-size:11px; font-weight:bold; color:#d35400;">🎩 Монополист</div>`;
+        if (htmlArts === "") htmlArts = "<div style='font-size:11px; color:#999; text-align:center; width:100%;'>У вас пока нет особых артефактов из кейса Монополии.</div>";
+        document.getElementById('inv-artifacts').innerHTML = htmlArts;
+        
+        document.getElementById('modal-inventory').style.display = 'flex';
+    }
 
-            for (let i = 0; i < pulls; i++) {
-                let r = Math.random();
-                let level = 1; // Common
-                if (r < 0.005 * clover) level = 5;
-                else if (r < (0.005 + 0.045) * clover) level = 4;
-                else if (r < (0.05 + 0.1) * clover) level = 3;
-                else if (r < (0.15 + 0.25) * clover) level = 2;
-
-                let key = type + '_level';
-                if (level > (state.runes[key] || 0)) state.runes[key] = level;
-                resultsStr.push(RUNE_NAMES[level]);
-            }
-            alert(`Открыто рун: ${pulls}\nРезультаты: ${resultsStr.join(', ')}`);
-            updateUI(); saveLocal();
-        }
-
-        function pullMonopolyCase() {
-            if (state.shares < 5) return alert("Нужно 5 Акций (💎)!");
-            state.shares -= 5;
+    // --- GACHA RUNES ---
+    const RUNE_NAMES = ["Ничего", "Обычная", "Редкая", "Эпическая", "Легендарная", "Мифическая"];
+    function pullRune(type) {
+        if (state.shares < 1) return alert("Недостаточно Акций (💎)!");
+        state.shares--;
+        let pulls = 1 + (state.runes.extra_pulls || 0);
+        activeEvents.forEach(e => { if(e.type === 'rune_pulls') pulls += e.value; });
+        let resultsStr = [];
+        let clover = state.runes.golden_clover ? 2 : 1;
+        
+        for(let i=0; i<pulls; i++) {
             let r = Math.random();
-            if (r < 0.00001) { state.runes.monopolist = true; alert("🎉 ЛЕГЕНДАРНО! Вы получили МОНОПОЛИСТ (x2 Акций)!"); }
-            else if (r < 0.00001 + 0.00999) { state.runes.golden_clover = true; alert("🎉 ЭПИЧЕСКИ! Золотой Клевер (x2 удача)!"); }
-            else if (r < 0.00001 + 0.00999 + 0.02) { state.runes.extra_pulls = (state.runes.extra_pulls || 0) + 1; alert("🎉 РЕДКО! Двойная Выгода (+1 к рунам за клик)!"); }
-            else { alert("Пустота... Повезет в следующий раз."); }
-            updateUI(); saveLocal();
+            let level = 1; // Common
+            if (r < 0.005 * clover) level = 5;
+            else if (r < (0.005 + 0.045) * clover) level = 4;
+            else if (r < (0.05 + 0.1) * clover) level = 3;
+            else if (r < (0.15 + 0.25) * clover) level = 2;
+            
+            let key = type + '_level';
+            if (level > (state.runes[key] || 0)) state.runes[key] = level;
+            resultsStr.push(RUNE_NAMES[level]);
         }
+        alert(`Открыто рун: ${pulls}\nРезультаты: ${resultsStr.join(', ')}`);
+        updateUI(); saveLocal();
+    }
 
-        // --- CASINO ROULETTE ---
-        async function placeRouletteBet(color) {
-            let amt = parseInt(document.getElementById('rl-bet').value);
-            if (isNaN(amt) || amt <= 0 || amt > state.money) return alert("Неверная ставка!");
-            try {
-                const r = await fetch(`${SERVER_URL}/roulette_bet`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: playerName, password: playerPass, color: color, amount: amt })
-                });
-                if (r.ok) {
-                    state.money -= amt; updateUI(); saveLocal();
-                    alert("Ставка принята!"); fetchRoulette();
-                }
-            } catch (e) { }
-        }
+    function pullMonopolyCase() {
+        if (state.shares < 5) return alert("Нужно 5 Акций (💎)!");
+        state.shares -= 5;
+        let r = Math.random();
+        if (r < 0.00001) { state.runes.monopolist = true; alert("🎉 ЛЕГЕНДАРНО! Вы получили МОНОПОЛИСТ (x2 Акций)!"); }
+        else if (r < 0.00001 + 0.00999) { state.runes.golden_clover = true; alert("🎉 ЭПИЧЕСКИ! Золотой Клевер (x2 удача)!"); }
+        else if (r < 0.00001 + 0.00999 + 0.02) { state.runes.extra_pulls = (state.runes.extra_pulls || 0) + 1; alert("🎉 РЕДКО! Двойная Выгода (+1 к рунам за клик)!"); }
+        else { alert("Пустота... Повезет в следующий раз."); }
+        updateUI(); saveLocal();
+    }
 
-        async function fetchRoulette() {
-            try {
-                const r = await fetch(`${SERVER_URL}/roulette`);
-                const res = await r.json();
-                document.getElementById('rl-timer').innerText = `Крутим через ${res.time_left}с`;
-
-                if (res.announcement && res.announcement.time > lastAnnounceTime) {
-                    lastAnnounceTime = res.announcement.time;
-                    showBroadcast(res.announcement.text);
-                }
-
-                if (res.event) {
-                    activeEventType = res.event.type;
-                    activeEventValue = res.event.value;
-                    let timeLeftMs = (res.event.end_time * 1000) - Date.now();
-                    let mins = Math.floor(timeLeftMs / 60000);
-                    let secs = Math.floor((timeLeftMs % 60000) / 1000);
-
-                    let bonusStr = "";
-                    if (res.event.type === 'money_mult') bonusStr = `Доход x${res.event.value}`;
-                    if (res.event.type === 'shares_mult') bonusStr = `Акции x${res.event.value}`;
-                    if (res.event.type === 'rune_pulls') bonusStr = `+${res.event.value} рун с кейсов`;
-                    if (res.event.type === 'building_discount') bonusStr = `Скидка ${res.event.value}% на здания`;
-                    if (res.event.type === 'roulette_green') bonusStr = `Зеленое x${res.event.value} в рулетке`;
-
-                    document.getElementById('event-banner').style.display = 'block';
-                    document.getElementById('event-banner').innerText = `🔥 ИВЕНТ: ${res.event.name} (${bonusStr}) - Осталось: ${mins}м ${secs}с! 🔥`;
-                } else {
-                    activeEventType = null;
-                    activeEventValue = 0;
-                    document.getElementById('event-banner').style.display = 'none';
-                }
-
-                let greenMult = (activeEventType === 'roulette_green') ? activeEventValue : 14;
-                document.querySelector('.bet-green').innerText = `ЗЕЛЕНОЕ (x${greenMult})`;
-
-                let histHtml = "<b>Ставки:</b><br>";
-                res.bets.forEach(b => {
-                    let cName = b.color == 'red' ? '🔴' : (b.color == 'black' ? '⚫' : '🟢');
-                    histHtml += `${b.user}: ${b.amount} на ${cName}<br>`;
-                });
-
-                if (res.last_result && !processedRouletteTimes.includes(res.last_result.time)) {
-                    processedRouletteTimes.push(res.last_result.time);
-                    let myWin = 0;
-                    res.last_result.winners.forEach(w => { if (w.user === playerName) myWin += w.win; });
-                    if (myWin > 0) {
-                        state.money += myWin;
-                        state.total_assets += myWin; // casino wins add to assets
-                        updateUI(); saveLocal();
-                        alert(`🎰 РУЛЕТКА: Выпало ${res.last_result.roll} (${res.last_result.color}). Вы выиграли ${myWin} 💰!`);
-                    }
-                    histHtml = `<b>ПРОШЛЫЙ РАУНД: ВЫПАЛО ${res.last_result.roll} (${res.last_result.color})</b><br>` + histHtml;
-                }
-                document.getElementById('rl-history').innerHTML = histHtml;
-            } catch (e) { }
-        }
-
-        // --- CASINO DUELS ---
-        async function fetchDuels() {
-            try {
-                const r = await fetch(`${SERVER_URL}/get_duels`);
-                const duels = await r.json();
-                let html = "";
-                duels.forEach(d => {
-                    if (d.status === 'waiting' && d.creator !== playerName) {
-                        html += `<div class="duel-item"><span>${d.creator}: ${d.amount} 💰</span> <button class="duel-btn" onclick="acceptDuel('${d.id}', ${d.amount})">Принять</button></div>`;
-                    }
-                    if (d.status === 'finished' && !processedDuels.includes(d.id)) {
-                        if (d.creator === playerName || d.joiner === playerName) {
-                            processedDuels.push(d.id);
-                            if (d.winner === playerName) {
-                                let winAmt = d.amount * 2;
-                                state.money += winAmt; state.total_assets += winAmt; updateUI(); saveLocal();
-                                alert(`⚔️ ВЫ ВЫИГРАЛИ ДУЭЛЬ! Получено ${winAmt} 💰`);
-                            } else {
-                                alert(`⚔️ ВЫ ПРОИГРАЛИ ДУЭЛЬ игроку ${d.winner}.`);
-                            }
-                        }
-                    }
-                });
-                if (html === "") html = "<div style='padding:5px; font-size:12px;'>Нет доступных дуэлей.</div>";
-                document.getElementById('duel-list').innerHTML = html;
-            } catch (e) { }
-        }
-
-        async function createDuel() {
-            let amt = parseInt(document.getElementById('duel-amount').value);
-            if (isNaN(amt) || amt <= 0 || amt > state.money) return alert("Неверная ставка!");
-            try {
-                const r = await fetch(`${SERVER_URL}/create_duel`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: playerName, password: playerPass, amount: amt })
-                });
-                const res = await r.json();
-                if (res.status === 'success') {
-                    state.money -= amt; updateUI(); saveLocal();
-                    alert("Дуэль создана! Ждем соперника."); fetchDuels();
-                } else alert("Ошибка: " + res.error);
-            } catch (e) { }
-        }
-
-        async function acceptDuel(id, amount) {
-            if (state.money < amount) return alert("Недостаточно денег!");
-            try {
-                const r = await fetch(`${SERVER_URL}/accept_duel`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: playerName, password: playerPass, id: id })
-                });
-                const res = await r.json();
-                if (res.status === 'success') {
-                    state.money -= amount; updateUI(); saveLocal();
-                    fetchDuels();
-                } else alert("Ошибка: " + res.error);
-            } catch (e) { }
-        }
-
-        // --- AUTH & NETWORK ---
-        function sanitizeState() {
-            if (!state.total_assets) state.total_assets = state.money;
-            if (!state.playtime_seconds) state.playtime_seconds = 0;
-        }
-
-        async function login() {
-            if (!playerName) {
-                const user = prompt("НИКНЕЙМ (без мата и ссылок):");
-                const pass = prompt("ПАРОЛЬ:");
-                if (user && pass) {
-                    try {
-                        const rLoad = await fetch(`${SERVER_URL}/load`, {
-                            method: 'POST', headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ username: user.trim(), password: pass.trim() })
-                        });
-                        if (rLoad.ok) {
-                            const resLoad = await rLoad.json();
-                            if (resLoad.state) {
-                                state = resLoad.state;
-                                sanitizeState();
-                            } else {
-                                state.money = resLoad.score || 0;
-                                state.rebirth = resLoad.rebirth || 0;
-                                state.total_assets = state.money;
-                            }
-                            playerName = user.trim(); playerPass = pass.trim();
-                            localStorage.setItem('nb_v5_name', playerName); localStorage.setItem('nb_v5_pass', playerPass);
-                            checkAFK();
-                            updateUI(); loadLeaderboard(); loadChat();
-                            return;
-                        }
-                        const rSave = await fetch(`${SERVER_URL}/save`, {
-                            method: 'POST', headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ username: user.trim(), password: pass.trim(), money: 0, rebirth: 0, assets: 0, playtime: 0, state: state })
-                        });
-                        const resSave = await rSave.json();
-                        if (resSave.status === "success") {
-                            playerName = user.trim(); playerPass = pass.trim();
-                            localStorage.setItem('nb_v5_name', playerName); localStorage.setItem('nb_v5_pass', playerPass);
-                            updateUI(); loadLeaderboard(); loadChat();
-                        } else { alert(resSave.error); login(); }
-                    } catch (e) { alert("Сервер недоступен."); }
-                }
-            } else { initGame(); }
-        }
-
-        async function saveOnline() {
-            if (!playerName) return;
-            state.lastSaveTime = Date.now();
-            try {
-                await fetch(`${SERVER_URL}/save`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: playerName, password: playerPass, money: Math.floor(state.money), rebirth: state.rebirth, assets: state.total_assets, playtime: state.playtime_seconds, state: state })
-                });
-            } catch (e) { }
-        }
-
-        async function deleteAccount() {
-            if (confirm("Вы УВЕРЕНЫ, что хотите удалить аккаунт? Все данные будут стерты!")) {
-                const p = prompt("Введите пароль для подтверждения:");
-                if (p === playerPass) {
-                    try {
-                        await fetch(`${SERVER_URL}/delete_account`, {
-                            method: 'POST', headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ username: playerName, password: playerPass })
-                        });
-                        localStorage.clear(); location.reload();
-                    } catch (e) { alert("Ошибка сервера."); }
-                } else { alert("Неверный пароль."); }
+    // --- CASINO ROULETTE ---
+    async function placeRouletteBet(color) {
+        let amt = parseInt(document.getElementById('rl-bet').value);
+        if (isNaN(amt) || amt <= 0 || amt > state.money) return alert("Неверная ставка!");
+        try {
+            const r = await fetch(`${SERVER_URL}/roulette_bet`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: playerName, password: playerPass, color: color, amount: amt })
+            });
+            if (r.ok) {
+                state.money -= amt; updateUI(); saveLocal();
+                alert("Ставка принята!"); fetchRoulette();
             }
-        }
+        } catch(e) {}
+    }
 
-        async function loadLeaderboard() {
-            try {
-                const r = await fetch(`${SERVER_URL}/leaderboard`);
-                leaderboardData = await r.json();
-                if (document.getElementById('tab-forbes').classList.contains('active')) renderLb();
-            } catch (e) { }
-        }
+    async function fetchRoulette() {
+        try {
+            const r = await fetch(`${SERVER_URL}/roulette`);
+            const res = await r.json();
+            document.getElementById('rl-timer').innerText = `Крутим через ${res.time_left}с`;
+            
+            if (res.announcement && res.announcement.time > lastAnnounceTime) {
+                lastAnnounceTime = res.announcement.time;
+                localStorage.setItem('nb_v5_announce', lastAnnounceTime);
+                showBroadcast(res.announcement.text);
+            }
+            
+            activeEvents = res.events || [];
+            
+            let container = document.getElementById('events-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'events-container';
+                container.style.position = 'fixed';
+                container.style.left = '10px';
+                container.style.top = '100px';
+                container.style.display = 'flex';
+                container.style.flexDirection = 'column';
+                container.style.gap = '10px';
+                container.style.zIndex = '1000';
+                container.style.pointerEvents = 'none';
+                document.body.appendChild(container);
+            }
+            container.innerHTML = '';
+            
+            activeEvents.forEach(ev => {
+                let timeLeftMs = (ev.end_time * 1000) - Date.now();
+                let mins = Math.floor(timeLeftMs / 60000);
+                let secs = Math.floor((timeLeftMs % 60000) / 1000);
+                
+                let bonusStr = "";
+                if(ev.type === 'money_mult') bonusStr = `Доход x${ev.value}`;
+                if(ev.type === 'shares_mult') bonusStr = `Акции x${ev.value}`;
+                if(ev.type === 'rune_pulls') bonusStr = `+${ev.value} рун`;
+                if(ev.type === 'building_discount') bonusStr = `Скидка ${ev.value}%`;
+                if(ev.type === 'roulette_green') bonusStr = `Зеленое x${ev.value}`;
 
-        async function loadChat() {
-            try {
-                const r = await fetch(`${SERVER_URL}/get_chat`);
-                const data = await r.json();
-                document.getElementById('chat-box').innerHTML = data.map(m => `<div><b>${m.user}:</b> ${m.text}</div>`).join('');
-            } catch (e) { }
-        }
+                let div = document.createElement('div');
+                div.style.background = '#e74c3c';
+                div.style.color = 'white';
+                div.style.padding = '10px';
+                div.style.borderRadius = '5px';
+                div.style.fontWeight = 'bold';
+                div.style.boxShadow = '0 4px 6px rgba(0,0,0,0.3)';
+                div.style.border = '2px solid #c0392b';
+                div.style.fontSize = '12px';
+                div.innerHTML = `🔥 ${ev.name}<br>${bonusStr}<br>⏱️ ${mins}м ${secs}с`;
+                container.appendChild(div);
+            });
+            
+            let greenMult = 14;
+            activeEvents.forEach(e => { if(e.type === 'roulette_green') greenMult = Math.max(greenMult, e.value); });
+            document.querySelector('.bet-green').innerText = `ЗЕЛЕНОЕ (x${greenMult})`;
+            
+            let histHtml = "<b>Ставки:</b><br>";
+            res.bets.forEach(b => {
+                let cName = b.color == 'red' ? '🔴' : (b.color == 'black' ? '⚫' : '🟢');
+                histHtml += `${b.user}: ${b.amount} на ${cName}<br>`;
+            });
+            
+            if (res.last_result && !processedRouletteTimes.includes(res.last_result.time)) {
+                processedRouletteTimes.push(res.last_result.time);
+                let myWin = 0;
+                res.last_result.winners.forEach(w => { if(w.user === playerName) myWin += w.win; });
+                if (myWin > 0) {
+                    state.money += myWin;
+                    state.total_assets += myWin; // casino wins add to assets
+                    updateUI(); saveLocal();
+                    alert(`🎰 РУЛЕТКА: Выпало ${res.last_result.roll} (${res.last_result.color}). Вы выиграли ${myWin} 💰!`);
+                }
+                histHtml = `<b>ПРОШЛЫЙ РАУНД: ВЫПАЛО ${res.last_result.roll} (${res.last_result.color})</b><br>` + histHtml;
+            }
+            document.getElementById('rl-history').innerHTML = histHtml;
+        } catch(e) {}
+    }
 
-        async function sendChatMessage() {
-            const msg = document.getElementById('chat-input').value.trim();
-            if (!msg || !playerName) return;
-            try {
-                await fetch(`${SERVER_URL}/send_chat`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: playerName, password: playerPass, message: msg })
-                });
-                document.getElementById('chat-input').value = ""; loadChat();
-            } catch (e) { }
-        }
+    // --- CASINO DUELS ---
+    async function fetchDuels() {
+        return; // ВРЕМЕННО ОТКЛЮЧЕНО
+        try {
+            const r = await fetch(`${SERVER_URL}/get_duels`);
+            const duels = await r.json();
+            let html = "";
+            duels.forEach(d => {
+                if (d.status === 'waiting' && d.creator !== playerName) {
+                    html += `<div class="duel-item"><span>${d.creator}: ${d.amount} 💰</span> <button class="duel-btn" onclick="acceptDuel('${d.id}', ${d.amount})">Принять</button></div>`;
+                }
+                if (d.status === 'finished' && !processedDuels.includes(d.id)) {
+                    if (d.creator === playerName || d.joiner === playerName) {
+                        processedDuels.push(d.id);
+                        if (d.winner === playerName) {
+                            let winAmt = d.amount * 2;
+                            state.money += winAmt; state.total_assets += winAmt; updateUI(); saveLocal();
+                            alert(`⚔️ ВЫ ВЫИГРАЛИ ДУЭЛЬ! Получено ${winAmt} 💰`);
+                        } else {
+                            alert(`⚔️ ВЫ ПРОИГРАЛИ ДУЭЛЬ игроку ${d.winner}.`);
+                        }
+                    }
+                }
+            });
+            if(html === "") html = "<div style='padding:5px; font-size:12px;'>Нет доступных дуэлей.</div>";
+            document.getElementById('duel-list').innerHTML = html;
+        } catch(e) {}
+    }
 
-        function saveLocal() { state.lastSaveTime = Date.now(); localStorage.setItem('nb_v5_save', JSON.stringify(state)); }
-        function logout() { localStorage.clear(); location.reload(); }
+    async function createDuel() {
+        return alert("Дуэли временно отключены!");
+        let amt = parseInt(document.getElementById('duel-amount').value);
+        if (isNaN(amt) || amt <= 0 || amt > state.money) return alert("Неверная ставка!");
+        try {
+            const r = await fetch(`${SERVER_URL}/create_duel`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: playerName, password: playerPass, amount: amt })
+            });
+            const res = await r.json();
+            if (res.status === 'success') {
+                state.money -= amt; updateUI(); saveLocal();
+                alert("Дуэль создана! Ждем соперника."); fetchDuels();
+            } else alert("Ошибка: " + res.error);
+        } catch(e) {}
+    }
 
-        // Init
-        setInterval(() => {
-            let inc = getIncome() / 10;
-            state.money += inc;
-            state.total_assets += inc;
-            updateUI();
-        }, 100);
+    async function acceptDuel(id, amount) {
+        if (state.money < amount) return alert("Недостаточно денег!");
+        try {
+            const r = await fetch(`${SERVER_URL}/accept_duel`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: playerName, password: playerPass, id: id })
+            });
+            const res = await r.json();
+            if (res.status === 'success') {
+                state.money -= amount; updateUI(); saveLocal();
+                fetchDuels(); 
+            } else alert("Ошибка: " + res.error);
+        } catch(e) {}
+    }
 
-        setInterval(() => { state.playtime_seconds += 1; }, 1000);
+    // --- AUTH & NETWORK ---
+    function sanitizeState() {
+        if(!state.total_assets) state.total_assets = state.money;
+        if(!state.playtime_seconds) state.playtime_seconds = 0;
+    }
 
-        setInterval(saveLocal, 5000);
-        setInterval(saveOnline, 15000);
-        setInterval(loadLeaderboard, 10000);
-        setInterval(loadChat, 5000);
-        setInterval(() => { fetchRoulette(); fetchDuels(); }, 3000);
-
-        async function initGame() {
-            if (!playerName) {
-                login();
-            } else {
+    async function login() {
+        if (!playerName) {
+            const user = prompt("НИКНЕЙМ (без мата и ссылок):");
+            const pass = prompt("ПАРОЛЬ:");
+            if (user && pass) {
                 try {
                     const rLoad = await fetch(`${SERVER_URL}/load`, {
-                        method: 'POST', headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ username: playerName, password: playerPass })
+                        method: 'POST', headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({username: user.trim(), password: pass.trim()})
                     });
                     if (rLoad.ok) {
                         const resLoad = await rLoad.json();
-                        let serverState = resLoad.state;
-
-                        if (!serverState) {
+                        if (resLoad.state) { 
+                            state = resLoad.state; 
+                            sanitizeState(); 
+                        } else {
                             state.money = resLoad.score || 0;
                             state.rebirth = resLoad.rebirth || 0;
                             state.total_assets = state.money;
-                        } else {
-                            // Trust server as source of truth for cross-device sync
-                            if (!state.lastSaveTime || (serverState.lastSaveTime && serverState.lastSaveTime > state.lastSaveTime)) {
-                                state = serverState;
-                            }
+                            state.multiplier = Math.pow(1.5, state.rebirth);
+                            state.shares = (state.rebirth * (state.rebirth + 1)) / 2;
+                        }
+                        
+                        if (state.rebirth > 0 && !state.shares_retroactive_awarded) {
+                            state.shares_retroactive_awarded = true;
+                            if (!state.shares) state.shares = (state.rebirth * (state.rebirth + 1)) / 2;
+                            if (state.multiplier <= 1) state.multiplier = Math.pow(1.5, state.rebirth);
+                        }
+                        
+                        playerName = user.trim(); playerPass = pass.trim();
+                        localStorage.setItem('nb_v5_name', playerName); localStorage.setItem('nb_v5_pass', playerPass);
+                        checkAFK(); 
+                        updateUI(); loadLeaderboard(); loadChat();
+                        return;
+                    }
+                    const rSave = await fetch(`${SERVER_URL}/save`, {
+                        method: 'POST', headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({username: user.trim(), password: pass.trim(), money: 0, rebirth: 0, assets: 0, playtime: 0, state: state})
+                    });
+                    const resSave = await rSave.json();
+                    if (resSave.status === "success") {
+                        playerName = user.trim(); playerPass = pass.trim();
+                        localStorage.setItem('nb_v5_name', playerName); localStorage.setItem('nb_v5_pass', playerPass);
+                        updateUI(); loadLeaderboard(); loadChat();
+                    } else { alert(resSave.error); login(); }
+                } catch(e) { alert("Сервер недоступен."); }
+            }
+        } else { initGame(); }
+    }
+
+    async function saveOnline() {
+        if (!playerName) return;
+        state.lastSaveTime = Date.now();
+        try {
+            await fetch(`${SERVER_URL}/save`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: playerName, password: playerPass, money: Math.floor(state.money), rebirth: state.rebirth, assets: state.total_assets, playtime: state.playtime_seconds, state: state })
+            });
+        } catch (e) {}
+    }
+
+    async function deleteAccount() {
+        if (confirm("Вы УВЕРЕНЫ, что хотите удалить аккаунт? Все данные будут стерты!")) {
+            const p = prompt("Введите пароль для подтверждения:");
+            if (p === playerPass) {
+                try {
+                    await fetch(`${SERVER_URL}/delete_account`, {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username: playerName, password: playerPass })
+                    });
+                    localStorage.clear(); location.reload();
+                } catch(e) { alert("Ошибка сервера."); }
+            } else { alert("Неверный пароль."); }
+        }
+    }
+
+    async function loadLeaderboard() {
+        try {
+            const r = await fetch(`${SERVER_URL}/leaderboard`);
+            leaderboardData = await r.json();
+            if(document.getElementById('tab-forbes').classList.contains('active')) renderLb();
+        } catch(e) {}
+    }
+
+    async function loadChat() {
+        try {
+            const r = await fetch(`${SERVER_URL}/get_chat`);
+            const data = await r.json();
+            document.getElementById('chat-box').innerHTML = data.map(m => `<div><b>${m.user}:</b> ${m.text}</div>`).join('');
+        } catch(e) {}
+    }
+
+    async function sendChatMessage() {
+        const msg = document.getElementById('chat-input').value.trim();
+        if (!msg || !playerName) return;
+        try {
+            await fetch(`${SERVER_URL}/send_chat`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: playerName, password: playerPass, message: msg })
+            });
+            document.getElementById('chat-input').value = ""; loadChat();
+        } catch(e) {}
+    }
+
+    function saveLocal() { state.lastSaveTime = Date.now(); localStorage.setItem('nb_v5_save', JSON.stringify(state)); }
+    function logout() { localStorage.clear(); location.reload(); }
+
+    // Init
+    setInterval(() => { 
+        let inc = getIncome() / 10;
+        state.money += inc; 
+        state.total_assets += inc;
+        updateUI(); 
+    }, 100);
+    
+    setInterval(() => { state.playtime_seconds += 1; }, 1000);
+    
+    setInterval(saveLocal, 5000);
+    setInterval(saveOnline, 15000);
+    setInterval(loadLeaderboard, 10000);
+    setInterval(loadChat, 5000);
+    setInterval(() => { fetchRoulette(); fetchDuels(); }, 3000);
+
+    async function initGame() {
+        if (!playerName) {
+            login();
+        } else {
+            try {
+                const rLoad = await fetch(`${SERVER_URL}/load`, {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({username: playerName, password: playerPass})
+                });
+                if (rLoad.ok) {
+                    const resLoad = await rLoad.json();
+                    let serverState = resLoad.state;
+                    
+                    if (!serverState) {
+                        state.money = resLoad.score || 0;
+                        state.rebirth = resLoad.rebirth || 0;
+                        state.total_assets = state.money;
+                        state.multiplier = Math.pow(1.5, state.rebirth);
+                        state.shares = (state.rebirth * (state.rebirth + 1)) / 2;
+                    } else {
+                        // Trust server as source of truth for cross-device sync
+                        if (!state.lastSaveTime || (serverState.lastSaveTime && serverState.lastSaveTime > state.lastSaveTime)) {
+                            state = serverState;
                         }
                     }
-                } catch (e) { console.log("Offline mode"); }
-
-                sanitizeState();
-                checkAFK();
-                updateUI();
-                loadLeaderboard();
-                loadChat();
-            }
+                    
+                    if (state.rebirth > 0 && !state.shares_retroactive_awarded) {
+                        state.shares_retroactive_awarded = true;
+                        if (!state.shares) state.shares = (state.rebirth * (state.rebirth + 1)) / 2;
+                        if (state.multiplier <= 1) state.multiplier = Math.pow(1.5, state.rebirth);
+                    }
+                }
+            } catch(e) { console.log("Offline mode"); }
+            
+            sanitizeState();
+            checkAFK();
+            updateUI(); 
+            loadLeaderboard(); 
+            loadChat();
         }
+    }
 
-        initGame();
-    </script>
+    initGame();
+</script>
 
 </body>
-
 </html>
